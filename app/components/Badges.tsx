@@ -1,588 +1,710 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import {
-  onAuthStateChanged,
-  type User,
-} from 'firebase/auth';
+import React, { useMemo, useState } from 'react';
 
-import {
-  doc,
-  getDoc,
-  setDoc,
-  increment,
-  serverTimestamp,
-} from 'firebase/firestore';
+type Badge = {
+  id: number;
+  title: string;
+  desc: string;
+  icon: string;
+  category: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  unlocked: boolean;
+  progress?: number;
+  target?: number;
+};
 
-import { auth, db } from '../firebase';
+export default function Badges() {
+  /*
+   * Şimdilik örnek ilerleme değerleri kullanıyoruz.
+   *
+   * Goal sistemini Firebase'e bağladığımızda bu değerleri:
+   * - tamamlanan hedef sayısı
+   * - günlük seri
+   * - çalışma günleri
+   * - Pomodoro oturumları
+   * - ders çalışma sayıları
+   *
+   * üzerinden otomatik hesaplayacağız.
+   */
 
-type PomodoroMode = 'work' | 'break';
+  const [badges] = useState<Badge[]>([
+    // ---------------------------------------------------------
+    // BAŞLANGIÇ
+    // ---------------------------------------------------------
+    {
+      id: 1,
+      title: 'İlk Adım',
+      desc: 'Nexora Study ile ilk hedefini tamamla.',
+      icon: '🎯',
+      category: 'Başlangıç',
+      rarity: 'common',
+      unlocked: true,
+      progress: 1,
+      target: 1,
+    },
 
-export default function Pomodoro() {
-  const [user, setUser] = useState<User | null>(null);
+    {
+      id: 2,
+      title: 'İlk Zafer',
+      desc: 'İlk günlük hedefini başarıyla tamamla.',
+      icon: '🌟',
+      category: 'Başlangıç',
+      rarity: 'common',
+      unlocked: true,
+      progress: 1,
+      target: 1,
+    },
 
-  // ------------------------------------------------------------
-  // SÜRELER
-  // ------------------------------------------------------------
+    {
+      id: 3,
+      title: 'Alışkanlık Başlıyor',
+      desc: '3 farklı günde hedeflerinden en az birini tamamla.',
+      icon: '🌱',
+      category: 'Başlangıç',
+      rarity: 'common',
+      unlocked: false,
+      progress: 2,
+      target: 3,
+    },
 
-  const [workMinutes, setWorkMinutes] = useState(25);
-  const [breakMinutes, setBreakMinutes] = useState(5);
+    // ---------------------------------------------------------
+    // SERİ / STREAK
+    // ---------------------------------------------------------
+    {
+      id: 4,
+      title: 'Alevi Yak',
+      desc: '3 gün üst üste günlük hedeflerinin tamamını bitir.',
+      icon: '🔥',
+      category: 'Seri',
+      rarity: 'rare',
+      unlocked: false,
+      progress: 2,
+      target: 3,
+    },
 
-  // ------------------------------------------------------------
-  // AKTİF SAYAÇ
-  // ------------------------------------------------------------
+    {
+      id: 5,
+      title: 'İstikrar Ustası',
+      desc: '7 gün boyunca günlük hedeflerini aksatmadan tamamla.',
+      icon: '⚡',
+      category: 'Seri',
+      rarity: 'rare',
+      unlocked: false,
+      progress: 4,
+      target: 7,
+    },
 
-  const [mode, setMode] = useState<PomodoroMode>('work');
-  const [minutes, setMinutes] = useState(25);
-  const [seconds, setSeconds] = useState(0);
-  const [isActive, setIsActive] = useState(false);
+    {
+      id: 6,
+      title: 'Demir İrade',
+      desc: '14 günlük kesintisiz hedef tamamlama serisine ulaş.',
+      icon: '🛡️',
+      category: 'Seri',
+      rarity: 'epic',
+      unlocked: false,
+      progress: 4,
+      target: 14,
+    },
 
-  // ------------------------------------------------------------
-  // FIREBASE
-  // ------------------------------------------------------------
+    {
+      id: 7,
+      title: 'Zinciri Kırma',
+      desc: '30 gün boyunca hedeflerini tamamlamaya devam et.',
+      icon: '⛓️',
+      category: 'Seri',
+      rarity: 'epic',
+      unlocked: false,
+      progress: 4,
+      target: 30,
+    },
 
-  const [completedPomodoros, setCompletedPomodoros] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+    {
+      id: 8,
+      title: 'Efsanevi Seri',
+      desc: '100 günlük kesintisiz başarı serisine ulaş.',
+      icon: '👑',
+      category: 'Seri',
+      rarity: 'legendary',
+      unlocked: false,
+      progress: 4,
+      target: 100,
+    },
 
-  // Sayaç sırasında güncel değerleri korumak için
-  const modeRef = useRef<PomodoroMode>('work');
-  const workMinutesRef = useRef(25);
-  const breakMinutesRef = useRef(5);
+    // ---------------------------------------------------------
+    // HEDEFLER
+    // ---------------------------------------------------------
+    {
+      id: 9,
+      title: 'Hedef Avcısı',
+      desc: 'Toplam 10 hedef tamamla.',
+      icon: '🏹',
+      category: 'Hedefler',
+      rarity: 'common',
+      unlocked: false,
+      progress: 6,
+      target: 10,
+    },
 
-  // ------------------------------------------------------------
-  // REF DEĞERLERİNİ GÜNCELLE
-  // ------------------------------------------------------------
+    {
+      id: 10,
+      title: 'Hedef Ustası',
+      desc: 'Toplam 50 hedef tamamla.',
+      icon: '🎯',
+      category: 'Hedefler',
+      rarity: 'rare',
+      unlocked: false,
+      progress: 6,
+      target: 50,
+    },
 
-  useEffect(() => {
-    modeRef.current = mode;
-  }, [mode]);
+    {
+      id: 11,
+      title: 'Zirveye Doğru',
+      desc: '100 hedefi başarıyla tamamla.',
+      icon: '🏆',
+      category: 'Hedefler',
+      rarity: 'epic',
+      unlocked: false,
+      progress: 6,
+      target: 100,
+    },
 
-  useEffect(() => {
-    workMinutesRef.current = workMinutes;
-  }, [workMinutes]);
+    {
+      id: 12,
+      title: 'Hedeflerin Efendisi',
+      desc: '500 hedef tamamlayarak büyük bir kilometre taşına ulaş.',
+      icon: '💎',
+      category: 'Hedefler',
+      rarity: 'legendary',
+      unlocked: false,
+      progress: 6,
+      target: 500,
+    },
 
-  useEffect(() => {
-    breakMinutesRef.current = breakMinutes;
-  }, [breakMinutes]);
+    // ---------------------------------------------------------
+    // ÇALIŞMA
+    // ---------------------------------------------------------
+    {
+      id: 13,
+      title: 'Çalışma Modu',
+      desc: 'İlk çalışma oturumunu tamamla.',
+      icon: '📚',
+      category: 'Çalışma',
+      rarity: 'common',
+      unlocked: false,
+      progress: 0,
+      target: 1,
+    },
 
-  // ------------------------------------------------------------
-  // FIREBASE'DEN KULLANICI VERİLERİNİ AL
-  // ------------------------------------------------------------
+    {
+      id: 14,
+      title: 'Odaklanmış Zihin',
+      desc: '10 çalışma oturumunu tamamla.',
+      icon: '🧠',
+      category: 'Çalışma',
+      rarity: 'rare',
+      unlocked: false,
+      progress: 0,
+      target: 10,
+    },
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      async (firebaseUser) => {
-        setUser(firebaseUser);
+    {
+      id: 15,
+      title: 'Derin Çalışma',
+      desc: '50 çalışma oturumunu tamamla.',
+      icon: '🔬',
+      category: 'Çalışma',
+      rarity: 'epic',
+      unlocked: false,
+      progress: 0,
+      target: 50,
+    },
 
-        if (!firebaseUser) {
-          setCompletedPomodoros(0);
-          setLoading(false);
-          return;
-        }
+    // ---------------------------------------------------------
+    // POMODORO
+    // ---------------------------------------------------------
+    {
+      id: 16,
+      title: 'İlk Odak',
+      desc: 'İlk Pomodoro çalışma seansını tamamla.',
+      icon: '🍅',
+      category: 'Pomodoro',
+      rarity: 'common',
+      unlocked: false,
+      progress: 0,
+      target: 1,
+    },
 
-        try {
-          setLoading(true);
-          setError('');
+    {
+      id: 17,
+      title: 'Odak Makinesi',
+      desc: '25 Pomodoro seansını tamamla.',
+      icon: '⚙️',
+      category: 'Pomodoro',
+      rarity: 'rare',
+      unlocked: false,
+      progress: 0,
+      target: 25,
+    },
 
-          const userRef = doc(
-            db,
-            'users',
-            firebaseUser.uid
-          );
+    {
+      id: 18,
+      title: 'Zihin Maratonu',
+      desc: '100 Pomodoro seansını tamamla.',
+      icon: '🏃',
+      category: 'Pomodoro',
+      rarity: 'epic',
+      unlocked: false,
+      progress: 0,
+      target: 100,
+    },
 
-          const snapshot = await getDoc(userRef);
+    // ---------------------------------------------------------
+    // PLANLAMA
+    // ---------------------------------------------------------
+    {
+      id: 19,
+      title: 'Ajanda Üstadı',
+      desc: 'Planını 3 gün arka arkaya düzenli şekilde doldur.',
+      icon: '📅',
+      category: 'Planlama',
+      rarity: 'rare',
+      unlocked: false,
+      progress: 0,
+      target: 3,
+    },
 
-          if (snapshot.exists()) {
-            const data = snapshot.data();
+    {
+      id: 20,
+      title: 'Planlı Öğrenci',
+      desc: '7 gün boyunca çalışma planını düzenli kullan.',
+      icon: '🗓️',
+      category: 'Planlama',
+      rarity: 'rare',
+      unlocked: false,
+      progress: 0,
+      target: 7,
+    },
 
-            const count =
-              typeof data.completedPomodoros === 'number'
-                ? data.completedPomodoros
-                : 0;
+    // ---------------------------------------------------------
+    // NOTLAR
+    // ---------------------------------------------------------
+    {
+      id: 21,
+      title: 'Hızlı Kalem',
+      desc: 'İlk hızlı notunu oluştur.',
+      icon: '✍️',
+      category: 'Notlar',
+      rarity: 'common',
+      unlocked: true,
+      progress: 1,
+      target: 1,
+    },
 
-            setCompletedPomodoros(count);
-          } else {
-            setCompletedPomodoros(0);
-          }
-        } catch (err) {
-          console.error(
-            'Pomodoro verisi okunamadı:',
-            err
-          );
+    {
+      id: 22,
+      title: 'Bilgi Avcısı',
+      desc: '25 faydalı not oluştur.',
+      icon: '🔎',
+      category: 'Notlar',
+      rarity: 'rare',
+      unlocked: false,
+      progress: 0,
+      target: 25,
+    },
 
-          setError(
-            'Pomodoro verileri Firebase üzerinden okunamadı.'
-          );
-        } finally {
-          setLoading(false);
-        }
-      }
-    );
+    // ---------------------------------------------------------
+    // SORU ÇÖZME
+    // ---------------------------------------------------------
+    {
+      id: 23,
+      title: 'Soru Çözücü',
+      desc: '100 soru çözdüğünü kaydet.',
+      icon: '📝',
+      category: 'Sorular',
+      rarity: 'rare',
+      unlocked: false,
+      progress: 0,
+      target: 100,
+    },
 
-    return () => unsubscribe();
-  }, []);
+    {
+      id: 24,
+      title: 'Soru Ustası',
+      desc: '500 soru çöz.',
+      icon: '🧩',
+      category: 'Sorular',
+      rarity: 'epic',
+      unlocked: false,
+      progress: 0,
+      target: 500,
+    },
 
-  // ------------------------------------------------------------
-  // POMODORO TAMAMLANDIĞINDA FIREBASE'E KAYDET
-  // ------------------------------------------------------------
+    {
+      id: 25,
+      title: 'Sınav Canavarı',
+      desc: '1000 soru çözerek büyük bir kilometre taşına ulaş.',
+      icon: '👹',
+      category: 'Sorular',
+      rarity: 'legendary',
+      unlocked: false,
+      progress: 0,
+      target: 1000,
+    },
 
-  const completePomodoro = async () => {
-    if (!user) {
-      setError('Pomodoro kaydetmek için giriş yapmalısın.');
-      return;
+    // ---------------------------------------------------------
+    // ÖZEL
+    // ---------------------------------------------------------
+    {
+      id: 26,
+      title: 'Gece Kuşu',
+      desc: 'Geç saatlerde bir çalışma hedefini tamamla.',
+      icon: '🦉',
+      category: 'Özel',
+      rarity: 'rare',
+      unlocked: false,
+    },
+
+    {
+      id: 27,
+      title: 'Sabah Savaşçısı',
+      desc: 'Sabah erken saatlerde ilk hedefini tamamla.',
+      icon: '🌅',
+      category: 'Özel',
+      rarity: 'rare',
+      unlocked: false,
+    },
+
+    {
+      id: 28,
+      title: 'Pes Etmeyen',
+      desc: 'Zor bir günün ardından ertesi gün tekrar çalışmaya dön.',
+      icon: '💪',
+      category: 'Özel',
+      rarity: 'epic',
+      unlocked: false,
+    },
+
+    {
+      id: 29,
+      title: 'Ajan Üstadı',
+      desc: 'Uzun vadeli çalışma serisini koruyarak istikrarını kanıtla.',
+      icon: '🕵️',
+      category: 'Özel',
+      rarity: 'legendary',
+      unlocked: false,
+    },
+  ]);
+
+  const [selectedCategory, setSelectedCategory] = useState('Tümü');
+
+  const categories = useMemo(() => {
+    return [
+      'Tümü',
+      ...Array.from(new Set(badges.map((badge) => badge.category))),
+    ];
+  }, [badges]);
+
+  const filteredBadges = useMemo(() => {
+    if (selectedCategory === 'Tümü') {
+      return badges;
     }
 
-    try {
-      setSaving(true);
-      setError('');
+    return badges.filter(
+      (badge) => badge.category === selectedCategory
+    );
+  }, [badges, selectedCategory]);
 
-      const userRef = doc(
-        db,
-        'users',
-        user.uid
-      );
+  const unlockedCount = badges.filter(
+    (badge) => badge.unlocked
+  ).length;
 
-      // increment kullanıyoruz.
-      // Böylece eski değerin üzerine güvenli şekilde +1 eklenir.
-      await setDoc(
-        userRef,
-        {
-          completedPomodoros: increment(1),
-          lastPomodoroCompletedAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        },
-        {
-          merge: true,
-        }
-      );
+  const completionPercentage = Math.round(
+    (unlockedCount / badges.length) * 100
+  );
 
-      // Ekrandaki sayıyı da hemen güncelle.
-      setCompletedPomodoros(
-        (current) => current + 1
-      );
-    } catch (err) {
-      console.error(
-        'Pomodoro Firebase kaydı başarısız:',
-        err
-      );
-
-      setError(
-        'Pomodoro tamamlandı fakat Firebase kaydedilemedi.'
-      );
-    } finally {
-      setSaving(false);
+  const getRarityLabel = (rarity: Badge['rarity']) => {
+    switch (rarity) {
+      case 'common':
+        return 'Yaygın';
+      case 'rare':
+        return 'Nadir';
+      case 'epic':
+        return 'Destansı';
+      case 'legendary':
+        return 'Efsanevi';
     }
   };
 
-  // ------------------------------------------------------------
-  // SAYAÇ
-  // ------------------------------------------------------------
+  const getRarityClass = (rarity: Badge['rarity']) => {
+    switch (rarity) {
+      case 'common':
+        return 'bg-slate-800 text-slate-300 border-slate-700';
 
-  useEffect(() => {
-    if (!isActive) {
-      return;
-    }
+      case 'rare':
+        return 'bg-blue-950/60 text-blue-300 border-blue-800';
 
-    const timer = window.setInterval(() => {
-      setSeconds((currentSeconds) => {
-        if (currentSeconds > 0) {
-          return currentSeconds - 1;
-        }
+      case 'epic':
+        return 'bg-purple-950/60 text-purple-300 border-purple-800';
 
-        setMinutes((currentMinutes) => {
-          if (currentMinutes > 0) {
-            return currentMinutes - 1;
-          }
-
-          return 0;
-        });
-
-        return 59;
-      });
-    }, 1000);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, [isActive]);
-
-  // ------------------------------------------------------------
-  // SAYAÇ 00:00 OLDUĞUNDA
-  // ------------------------------------------------------------
-
-  useEffect(() => {
-    if (
-      !isActive ||
-      minutes !== 0 ||
-      seconds !== 0
-    ) {
-      return;
-    }
-
-    const finish = async () => {
-      setIsActive(false);
-
-      // --------------------------------------------------------
-      // ÇALIŞMA BİTTİ
-      // --------------------------------------------------------
-
-      if (modeRef.current === 'work') {
-        await completePomodoro();
-
-        alert(
-          '🎉 Pomodoro tamamlandı! Harika odaklandın. Şimdi mola zamanı.'
-        );
-
-        setMode('break');
-        setMinutes(breakMinutesRef.current);
-        setSeconds(0);
-
-        return;
-      }
-
-      // --------------------------------------------------------
-      // MOLA BİTTİ
-      // --------------------------------------------------------
-
-      alert(
-        '☕ Mola tamamlandı! Hazırsan yeni çalışma seansına başlayabilirsin.'
-      );
-
-      setMode('work');
-      setMinutes(workMinutesRef.current);
-      setSeconds(0);
-    };
-
-    finish();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [minutes, seconds, isActive]);
-
-  // ------------------------------------------------------------
-  // ÇALIŞMA SÜRESİNİ DEĞİŞTİR
-  // ------------------------------------------------------------
-
-  const updateWorkMinutes = (value: number) => {
-    if (isActive) return;
-
-    const safeValue = Math.min(
-      120,
-      Math.max(1, value || 1)
-    );
-
-    setWorkMinutes(safeValue);
-    workMinutesRef.current = safeValue;
-
-    if (mode === 'work') {
-      setMinutes(safeValue);
-      setSeconds(0);
+      case 'legendary':
+        return 'bg-amber-950/60 text-amber-300 border-amber-700';
     }
   };
-
-  // ------------------------------------------------------------
-  // MOLA SÜRESİNİ DEĞİŞTİR
-  // ------------------------------------------------------------
-
-  const updateBreakMinutes = (value: number) => {
-    if (isActive) return;
-
-    const safeValue = Math.min(
-      60,
-      Math.max(1, value || 1)
-    );
-
-    setBreakMinutes(safeValue);
-    breakMinutesRef.current = safeValue;
-
-    if (mode === 'break') {
-      setMinutes(safeValue);
-      setSeconds(0);
-    }
-  };
-
-  // ------------------------------------------------------------
-  // MOD DEĞİŞTİR
-  // ------------------------------------------------------------
-
-  const changeMode = (nextMode: PomodoroMode) => {
-    if (isActive) return;
-
-    setMode(nextMode);
-    modeRef.current = nextMode;
-
-    if (nextMode === 'work') {
-      setMinutes(workMinutes);
-    } else {
-      setMinutes(breakMinutes);
-    }
-
-    setSeconds(0);
-  };
-
-  // ------------------------------------------------------------
-  // SIFIRLA
-  // ------------------------------------------------------------
-
-  const resetTimer = () => {
-    setIsActive(false);
-
-    if (mode === 'work') {
-      setMinutes(workMinutes);
-    } else {
-      setMinutes(breakMinutes);
-    }
-
-    setSeconds(0);
-  };
-
-  // ------------------------------------------------------------
-  // YÜKLENİYOR
-  // ------------------------------------------------------------
-
-  if (loading) {
-    return (
-      <div className="min-h-screen p-8 flex items-center justify-center">
-        <div className="bg-slate-900/70 border border-slate-800 rounded-3xl px-8 py-6 text-center shadow-2xl">
-          <div className="w-10 h-10 mx-auto mb-3 rounded-full border-4 border-white/10 border-t-teal-400 animate-spin" />
-
-          <p className="text-sm font-semibold text-white">
-            Pomodoro yükleniyor...
-          </p>
-
-          <p className="text-xs text-slate-500 mt-2">
-            Firebase verileri kontrol ediliyor.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // ------------------------------------------------------------
-  // GİRİŞ YOK
-  // ------------------------------------------------------------
-
-  if (!user) {
-    return (
-      <div className="min-h-screen p-8 flex items-center justify-center">
-        <div className="bg-slate-900/70 border border-slate-800 rounded-3xl p-8 text-center shadow-2xl">
-          <div className="text-4xl mb-4">
-            🔐
-          </div>
-
-          <h2 className="text-xl font-bold text-white mb-2">
-            Pomodoro
-          </h2>
-
-          <p className="text-sm text-slate-400">
-            Pomodoro kullanmak için giriş yapmalısın.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // ------------------------------------------------------------
-  // SAYFA
-  // ------------------------------------------------------------
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-8 animate-fadeIn">
+    <div className="p-8 max-w-6xl mx-auto space-y-8 animate-fadeIn">
 
-      <div className="bg-slate-900/60 backdrop-blur-md p-8 rounded-3xl border border-slate-800 text-center max-w-md mx-auto shadow-xl">
+      {/* ---------------------------------------------------------
+          ÜST PANEL
+      --------------------------------------------------------- */}
 
-        <h2 className="text-2xl font-black text-white mb-2">
-          🍅 Pomodoro Odaklanma
-        </h2>
+      <div className="bg-slate-900/70 backdrop-blur-md p-8 rounded-3xl border border-slate-800 shadow-2xl">
 
-        <p className="text-xs text-slate-400 mb-6">
-          Çalışma ve mola sürelerini kendin belirle.
-        </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
 
-        {/* MOD */}
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">🏆</span>
 
-        <div className="grid grid-cols-2 gap-2 mb-6">
+              <div>
+                <h2 className="text-2xl font-extrabold text-white">
+                  Rozet & Başarı Koleksiyonum
+                </h2>
 
-          <button
-            type="button"
-            disabled={isActive}
-            onClick={() => changeMode('work')}
-            className={`py-3 rounded-xl text-sm font-bold transition ${
-              mode === 'work'
-                ? 'bg-teal-500 text-slate-950'
-                : 'bg-slate-800 text-slate-400'
-            } disabled:opacity-50`}
-          >
-            📚 Çalışma
-          </button>
-
-          <button
-            type="button"
-            disabled={isActive}
-            onClick={() => changeMode('break')}
-            className={`py-3 rounded-xl text-sm font-bold transition ${
-              mode === 'break'
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-800 text-slate-400'
-            } disabled:opacity-50`}
-          >
-            ☕ Mola
-          </button>
-
-        </div>
-
-        {/* MOD BAŞLIĞI */}
-
-        <div className="text-xs uppercase tracking-wider font-bold text-slate-500 mb-2">
-          {mode === 'work'
-            ? 'Çalışma zamanı'
-            : 'Mola zamanı'}
-        </div>
-
-        {/* SAYAÇ */}
-
-        <div
-          className={`text-6xl font-black mb-6 font-mono tracking-wider ${
-            mode === 'work'
-              ? 'text-teal-300'
-              : 'text-blue-300'
-          }`}
-        >
-          {String(minutes).padStart(2, '0')}:
-          {String(seconds).padStart(2, '0')}
-        </div>
-
-        {/* SÜRELER */}
-
-        <div className="space-y-3 mb-6">
-
-          <div className="flex items-center justify-between gap-3 bg-slate-950/60 border border-slate-800 rounded-2xl p-3">
-
-            <span className="text-xs font-bold text-slate-400">
-              📚 Çalışma süresi
-            </span>
-
-            <div className="flex items-center gap-2">
-
-              <input
-                type="number"
-                min="1"
-                max="120"
-                value={workMinutes}
-                disabled={isActive}
-                onChange={(e) =>
-                  updateWorkMinutes(
-                    Number(e.target.value)
-                  )
-                }
-                className="w-16 px-3 py-2 bg-slate-800 border border-slate-700 text-white rounded-xl text-center font-bold text-sm focus:outline-none focus:border-teal-500 disabled:opacity-50"
-              />
-
-              <span className="text-xs text-slate-500">
-                dk
-              </span>
-
+                <p className="text-xs text-slate-400 mt-1">
+                  Hedeflerini tamamla, serini koru ve yeni başarıların
+                  kilidini aç.
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3 bg-slate-950/60 border border-slate-800 rounded-2xl p-3">
+          <div className="flex items-center gap-3">
 
-            <span className="text-xs font-bold text-slate-400">
-              ☕ Mola süresi
-            </span>
+            <div className="bg-teal-500/10 border border-teal-500/30 px-5 py-3 rounded-2xl text-center">
+              <div className="text-[10px] text-teal-400 font-bold uppercase tracking-wider">
+                Kazanılan
+              </div>
 
-            <div className="flex items-center gap-2">
-
-              <input
-                type="number"
-                min="1"
-                max="60"
-                value={breakMinutes}
-                disabled={isActive}
-                onChange={(e) =>
-                  updateBreakMinutes(
-                    Number(e.target.value)
-                  )
-                }
-                className="w-16 px-3 py-2 bg-slate-800 border border-slate-700 text-white rounded-xl text-center font-bold text-sm focus:outline-none focus:border-blue-500 disabled:opacity-50"
-              />
-
-              <span className="text-xs text-slate-500">
-                dk
-              </span>
-
+              <div className="text-xl font-black text-white">
+                {unlockedCount}
+                <span className="text-slate-500">
+                  /{badges.length}
+                </span>
+              </div>
             </div>
+
+            <div className="bg-amber-500/10 border border-amber-500/30 px-5 py-3 rounded-2xl text-center">
+              <div className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
+                İlerleme
+              </div>
+
+              <div className="text-xl font-black text-white">
+                %{completionPercentage}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Genel ilerleme */}
+
+        <div className="mt-7">
+
+          <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-2">
+            <span>Rozet koleksiyonu</span>
+            <span>
+              {unlockedCount} / {badges.length}
+            </span>
           </div>
 
+          <div className="h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+
+            <div
+              className="h-full bg-gradient-to-r from-teal-400 via-blue-500 to-purple-500 transition-all duration-700"
+              style={{
+                width: `${completionPercentage}%`,
+              }}
+            />
+
+          </div>
         </div>
+      </div>
 
-        {/* BUTONLAR */}
+      {/* ---------------------------------------------------------
+          KATEGORİLER
+      --------------------------------------------------------- */}
 
-        <div className="flex gap-4">
+      <div className="flex gap-2 overflow-x-auto pb-2">
+
+        {categories.map((category) => (
 
           <button
+            key={category}
             type="button"
-            disabled={saving}
-            onClick={() => setIsActive((current) => !current)}
-            className={`flex-1 py-3.5 rounded-2xl font-bold text-sm transition-all ${
-              isActive
-                ? 'bg-rose-500 hover:bg-rose-600 text-white'
-                : mode === 'work'
-                ? 'bg-teal-500 hover:bg-teal-600 text-slate-950 shadow-lg'
-                : 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg'
-            } disabled:opacity-50`}
+            onClick={() => setSelectedCategory(category)}
+            className={`whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold border transition ${
+              selectedCategory === category
+                ? 'bg-teal-500 text-white border-teal-400'
+                : 'bg-slate-900/70 text-slate-400 border-slate-800 hover:text-white hover:border-slate-600'
+            }`}
           >
-            {isActive
-              ? 'Durdur ⏸'
-              : mode === 'work'
-              ? 'Başlat 🚀'
-              : 'Molayı Başlat ☕'}
+            {category}
           </button>
 
-          <button
-            type="button"
-            onClick={resetTimer}
-            className="px-5 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-2xl text-sm transition-all"
-          >
-            Sıfırla 🔄
-          </button>
+        ))}
 
-        </div>
+      </div>
 
-        {/* HATA */}
+      {/* ---------------------------------------------------------
+          ROZETLER
+      --------------------------------------------------------- */}
 
-        {error && (
-          <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
-            <p className="text-xs text-red-300">
-              ⚠️ {error}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        {filteredBadges.map((badge) => {
+
+          const progress = badge.progress ?? 0;
+          const target = badge.target ?? 0;
+
+          const progressPercentage =
+            target > 0
+              ? Math.min(
+                  100,
+                  Math.round((progress / target) * 100)
+                )
+              : 0;
+
+          return (
+            <div
+              key={badge.id}
+              className={`relative overflow-hidden p-6 rounded-3xl border transition-all duration-300 ${
+                badge.unlocked
+                  ? 'bg-slate-900/70 border-teal-500/40 shadow-lg shadow-teal-950/20 hover:-translate-y-1'
+                  : 'bg-slate-950/50 border-slate-800 opacity-75 hover:opacity-100'
+              }`}
+            >
+
+              {/* Parlaklık */}
+
+              {badge.unlocked && (
+                <div className="absolute top-0 right-0 w-24 h-24 bg-teal-400/10 blur-3xl rounded-full" />
+              )}
+
+              <div className="relative">
+
+                <div className="flex items-start justify-between gap-3">
+
+                  <div
+                    className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border ${
+                      badge.unlocked
+                        ? 'bg-slate-800 border-teal-500/30'
+                        : 'bg-slate-900 border-slate-800 grayscale'
+                    }`}
+                  >
+                    {badge.unlocked ? badge.icon : '🔒'}
+                  </div>
+
+                  <span
+                    className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${getRarityClass(
+                      badge.rarity
+                    )}`}
+                  >
+                    {getRarityLabel(badge.rarity)}
+                  </span>
+
+                </div>
+
+                <h3 className="font-bold text-white text-lg mt-5">
+                  {badge.title}
+                </h3>
+
+                <p className="text-xs text-slate-400 mt-2 leading-relaxed min-h-[40px]">
+                  {badge.desc}
+                </p>
+
+                {/* İlerleme */}
+
+                {!badge.unlocked &&
+                  typeof badge.target === 'number' && (
+                    <div className="mt-5">
+
+                      <div className="flex justify-between text-[9px] font-bold text-slate-500 mb-2">
+                        <span>İlerleme</span>
+
+                        <span>
+                          {progress} / {target}
+                        </span>
+                      </div>
+
+                      <div className="h-2 bg-slate-950 rounded-full overflow-hidden">
+
+                        <div
+                          className="h-full bg-gradient-to-r from-teal-400 to-blue-500 transition-all"
+                          style={{
+                            width: `${progressPercentage}%`,
+                          }}
+                        />
+
+                      </div>
+
+                    </div>
+                  )}
+
+                <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
+
+                  <span
+                    className={`text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider ${
+                      badge.unlocked
+                        ? 'bg-teal-950 text-teal-300 border border-teal-800'
+                        : 'bg-slate-900 text-slate-500 border border-slate-800'
+                    }`}
+                  >
+                    {badge.unlocked
+                      ? 'Kazanıldı ✨'
+                      : 'Kilitli 🔒'}
+                  </span>
+
+                  {badge.unlocked && (
+                    <span className="text-xs">
+                      ⭐
+                    </span>
+                  )}
+
+                </div>
+
+              </div>
+            </div>
+          );
+        })}
+
+      </div>
+
+      {/* ---------------------------------------------------------
+          MOTİVASYON
+      --------------------------------------------------------- */}
+
+      <div className="bg-gradient-to-r from-teal-950/70 via-slate-900/80 to-purple-950/70 border border-teal-900/50 rounded-3xl p-7">
+
+        <div className="flex items-start gap-4">
+
+          <div className="text-3xl">
+            🚀
+          </div>
+
+          <div>
+
+            <h3 className="text-white font-extrabold">
+              Bir sonraki rozetin seni bekliyor.
+            </h3>
+
+            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              Büyük başarılar tek seferde gelmez. Her gün küçük bir
+              hedefi tamamlamak, uzun vadede seni çok daha ileri taşır.
             </p>
-          </div>
-        )}
 
-        {/* KAYDEDİLİYOR */}
-
-        {saving && (
-          <p className="text-xs text-blue-300 mt-4">
-            ⏳ Pomodoro Firebase'e kaydediliyor...
-          </p>
-        )}
-
-        {/* İSTATİSTİK */}
-
-        <div className="mt-6 pt-5 border-t border-slate-800">
-
-          <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
-            Tamamlanan Pomodoro
-          </div>
-
-          <div className="text-2xl font-black text-white mt-1">
-            {completedPomodoros}
-          </div>
-
-          <div className="text-[10px] text-slate-500 mt-1">
-            Tamamlanan çalışma seansların burada tutulur.
           </div>
 
         </div>
