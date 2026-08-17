@@ -1,14 +1,8 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  collection,
-  getDocs,
-  doc,
-  getDoc,
-} from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-
 import { db, auth } from '../firebase';
 
 type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
@@ -25,20 +19,11 @@ type Badge = {
   target?: number;
 };
 
-type FirebaseItem = {
-  id: string;
-  completed?: boolean;
-  status?: string;
-  createdAt?: any;
-  completedAt?: any;
-  date?: string;
-};
-
 export default function Badges() {
   const [selectedCategory, setSelectedCategory] = useState('Tümü');
   const [loading, setLoading] = useState(true);
 
-  // İLERLEME DEĞERLERİ
+  // KULLANICI İSTATİSTİKLERİ
   const [completedGoals, setCompletedGoals] = useState(0);
   const [pomodoroCount, setPomodoroCount] = useState(0);
   const [studySessionCount, setStudySessionCount] = useState(0);
@@ -57,63 +42,38 @@ export default function Badges() {
         setLoading(true);
         const userId = user.uid;
 
-        // 1. Kullanıcı Ana Dokümanını Kontrol Et (Sayaçlar doğrudan burada tutuluyor olabilir)
+        // Kullanıcının ana dokümanını al (Pomodoro sayısı burada saklanıyor)
         const userDocRef = doc(db, 'users', userId);
         const userDocSnap = await getDoc(userDocRef);
-        
-        let pCount = 0;
-        let gCount = 0;
 
         if (userDocSnap.exists()) {
           const userData = userDocSnap.data();
-          // Eğer ana dokümanda sayaçlar tutuluyorsa onları alıyoruz
-          pCount = userData.tamamlandiPomodorolar || userData.pomodoroCount || 0;
-          gCount = userData.completedGoals || 0;
+          
+          // Pomodoro sayısını doğrudan okuyoruz
+          setPomodoroCount(Number(userData.completedPomodoros) || 0);
+          
+          // Eğer diğer sayaçlar da ana dokümanda tutuluyorsa onları alıyoruz
+          setCompletedGoals(Number(userData.completedGoals) || 0);
+          setStudySessionCount(Number(userData.studySessionCount) || 0);
+          setSolvedQuestionCount(Number(userData.solvedQuestionCount) || 0);
+          setNoteCount(Number(userData.noteCount) || 0);
         }
 
-        // 2. HEDEFLER (Alt koleksiyon veya ana doküman fallback)
-        const goalsSnapshot = await getDocs(collection(db, 'users', userId, 'goals'));
-        const finishedGoals = goalsSnapshot.empty ? gCount : goalsSnapshot.docs.filter(
-          (docSnap) => {
-            const data = docSnap.data() as FirebaseItem;
-            return data.completed === true || data.status === 'completed' || data.status === 'done';
+        // Alternatif olarak alt koleksiyonları da kontrol edelim (Güvenceye almak için)
+        try {
+          const goalsSnapshot = await getDocs(collection(db, 'users', userId, 'goals'));
+          if (!goalsSnapshot.empty) {
+            const finishedGoals = goalsSnapshot.docs.filter(d => d.data().completed === true || d.data().status === 'completed').length;
+            if (finishedGoals > 0) setCompletedGoals(prev => Math.max(prev, finishedGoals));
           }
-        ).length;
-        setCompletedGoals(Math.max(gCount, finishedGoals));
+        } catch (e) { /* Sessizce geç */ }
 
-        // 3. POMODORO (Alt koleksiyon veya ana doküman fallback)
-        const pomodoroSnapshot = await getDocs(collection(db, 'users', userId, 'pomodoros'));
-        const completedPomodoros = pomodoroSnapshot.empty ? pCount : pomodoroSnapshot.docs.filter(
-          (docSnap) => {
-            const data = docSnap.data() as FirebaseItem;
-            return data.completed === true || data.status === 'completed' || data.status === 'done';
+        try {
+          const notesSnapshot = await getDocs(collection(db, 'users', userId, 'notes'));
+          if (!notesSnapshot.empty) {
+            setNoteCount(prev => Math.max(prev, notesSnapshot.size));
           }
-        ).length;
-        setPomodoroCount(Math.max(pCount, completedPomodoros));
-
-        // 4. ÇALIŞMA OTURUMLARI
-        const studySnapshot = await getDocs(collection(db, 'users', userId, 'studySessions'));
-        const completedStudySessions = studySnapshot.docs.filter(
-          (docSnap) => {
-            const data = docSnap.data() as FirebaseItem;
-            return data.completed === true || data.status === 'completed' || data.status === 'done';
-          }
-        ).length;
-        setStudySessionCount(completedStudySessions);
-
-        // 5. SORULAR
-        const questionsSnapshot = await getDocs(collection(db, 'users', userId, 'questions'));
-        const solvedQuestions = questionsSnapshot.docs.filter(
-          (docSnap) => {
-            const data = docSnap.data() as FirebaseItem;
-            return data.status === 'resolved' || data.completed === true || data.status === 'completed';
-          }
-        ).length;
-        setSolvedQuestionCount(solvedQuestions);
-
-        // 6. NOTLAR
-        const notesSnapshot = await getDocs(collection(db, 'users', userId, 'notes'));
-        setNoteCount(notesSnapshot.size);
+        } catch (e) { /* Sessizce geç */ }
 
       } catch (error) {
         console.error('Rozet verileri yüklenemedi:', error);
