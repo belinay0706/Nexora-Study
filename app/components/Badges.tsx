@@ -1,6 +1,17 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+} from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+
+import { db, auth } from '../firebase';
+
+type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
 
 type Badge = {
   id: number;
@@ -8,30 +19,114 @@ type Badge = {
   desc: string;
   icon: string;
   category: string;
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  rarity: Rarity;
   unlocked: boolean;
   progress?: number;
   target?: number;
 };
 
-export default function Badges() {
-  /*
-   * Şimdilik örnek ilerleme değerleri kullanıyoruz.
-   *
-   * Goal sistemini Firebase'e bağladığımızda bu değerleri:
-   * - tamamlanan hedef sayısı
-   * - günlük seri
-   * - çalışma günleri
-   * - Pomodoro oturumları
-   * - ders çalışma sayıları
-   *
-   * üzerinden otomatik hesaplayacağız.
-   */
+type FirebaseItem = {
+  id: string;
+  completed?: boolean;
+  status?: string;
+  createdAt?: any;
+  completedAt?: any;
+  date?: string;
+};
 
-  const [badges] = useState<Badge[]>([
-    // ---------------------------------------------------------
-    // BAŞLANGIÇ
-    // ---------------------------------------------------------
+export default function Badges() {
+  const [selectedCategory, setSelectedCategory] = useState('Tümü');
+  const [loading, setLoading] = useState(true);
+
+  // İLERLEME DEĞERLERİ
+  const [completedGoals, setCompletedGoals] = useState(0);
+  const [pomodoroCount, setPomodoroCount] = useState(0);
+  const [studySessionCount, setStudySessionCount] = useState(0);
+  const [solvedQuestionCount, setSolvedQuestionCount] = useState(0);
+  const [noteCount, setNoteCount] = useState(0);
+
+  // FIREBASE'DEN VERİLERİ ÇEK
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const userId = user.uid;
+
+        // 1. Kullanıcı Ana Dokümanını Kontrol Et (Sayaçlar doğrudan burada tutuluyor olabilir)
+        const userDocRef = doc(db, 'users', userId);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        let pCount = 0;
+        let gCount = 0;
+
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          // Eğer ana dokümanda sayaçlar tutuluyorsa onları alıyoruz
+          pCount = userData.tamamlandiPomodorolar || userData.pomodoroCount || 0;
+          gCount = userData.completedGoals || 0;
+        }
+
+        // 2. HEDEFLER (Alt koleksiyon veya ana doküman fallback)
+        const goalsSnapshot = await getDocs(collection(db, 'users', userId, 'goals'));
+        const finishedGoals = goalsSnapshot.empty ? gCount : goalsSnapshot.docs.filter(
+          (docSnap) => {
+            const data = docSnap.data() as FirebaseItem;
+            return data.completed === true || data.status === 'completed' || data.status === 'done';
+          }
+        ).length;
+        setCompletedGoals(Math.max(gCount, finishedGoals));
+
+        // 3. POMODORO (Alt koleksiyon veya ana doküman fallback)
+        const pomodoroSnapshot = await getDocs(collection(db, 'users', userId, 'pomodoros'));
+        const completedPomodoros = pomodoroSnapshot.empty ? pCount : pomodoroSnapshot.docs.filter(
+          (docSnap) => {
+            const data = docSnap.data() as FirebaseItem;
+            return data.completed === true || data.status === 'completed' || data.status === 'done';
+          }
+        ).length;
+        setPomodoroCount(Math.max(pCount, completedPomodoros));
+
+        // 4. ÇALIŞMA OTURUMLARI
+        const studySnapshot = await getDocs(collection(db, 'users', userId, 'studySessions'));
+        const completedStudySessions = studySnapshot.docs.filter(
+          (docSnap) => {
+            const data = docSnap.data() as FirebaseItem;
+            return data.completed === true || data.status === 'completed' || data.status === 'done';
+          }
+        ).length;
+        setStudySessionCount(completedStudySessions);
+
+        // 5. SORULAR
+        const questionsSnapshot = await getDocs(collection(db, 'users', userId, 'questions'));
+        const solvedQuestions = questionsSnapshot.docs.filter(
+          (docSnap) => {
+            const data = docSnap.data() as FirebaseItem;
+            return data.status === 'resolved' || data.completed === true || data.status === 'completed';
+          }
+        ).length;
+        setSolvedQuestionCount(solvedQuestions);
+
+        // 6. NOTLAR
+        const notesSnapshot = await getDocs(collection(db, 'users', userId, 'notes'));
+        setNoteCount(notesSnapshot.size);
+
+      } catch (error) {
+        console.error('Rozet verileri yüklenemedi:', error);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // ROZETLER LİSTESİ
+  const badges = useMemo<Badge[]>(() => [
     {
       id: 1,
       title: 'İlk Adım',
@@ -39,11 +134,10 @@ export default function Badges() {
       icon: '🎯',
       category: 'Başlangıç',
       rarity: 'common',
-      unlocked: true,
-      progress: 1,
+      unlocked: completedGoals >= 1,
+      progress: Math.min(completedGoals, 1),
       target: 1,
     },
-
     {
       id: 2,
       title: 'İlk Zafer',
@@ -51,11 +145,10 @@ export default function Badges() {
       icon: '🌟',
       category: 'Başlangıç',
       rarity: 'common',
-      unlocked: true,
-      progress: 1,
+      unlocked: completedGoals >= 1,
+      progress: Math.min(completedGoals, 1),
       target: 1,
     },
-
     {
       id: 3,
       title: 'Alışkanlık Başlıyor',
@@ -63,14 +156,10 @@ export default function Badges() {
       icon: '🌱',
       category: 'Başlangıç',
       rarity: 'common',
-      unlocked: false,
-      progress: 2,
+      unlocked: completedGoals >= 3,
+      progress: Math.min(completedGoals, 3),
       target: 3,
     },
-
-    // ---------------------------------------------------------
-    // SERİ / STREAK
-    // ---------------------------------------------------------
     {
       id: 4,
       title: 'Alevi Yak',
@@ -78,62 +167,10 @@ export default function Badges() {
       icon: '🔥',
       category: 'Seri',
       rarity: 'rare',
-      unlocked: false,
-      progress: 2,
+      unlocked: completedGoals >= 3,
+      progress: Math.min(completedGoals, 3),
       target: 3,
     },
-
-    {
-      id: 5,
-      title: 'İstikrar Ustası',
-      desc: '7 gün boyunca günlük hedeflerini aksatmadan tamamla.',
-      icon: '⚡',
-      category: 'Seri',
-      rarity: 'rare',
-      unlocked: false,
-      progress: 4,
-      target: 7,
-    },
-
-    {
-      id: 6,
-      title: 'Demir İrade',
-      desc: '14 günlük kesintisiz hedef tamamlama serisine ulaş.',
-      icon: '🛡️',
-      category: 'Seri',
-      rarity: 'epic',
-      unlocked: false,
-      progress: 4,
-      target: 14,
-    },
-
-    {
-      id: 7,
-      title: 'Zinciri Kırma',
-      desc: '30 gün boyunca hedeflerini tamamlamaya devam et.',
-      icon: '⛓️',
-      category: 'Seri',
-      rarity: 'epic',
-      unlocked: false,
-      progress: 4,
-      target: 30,
-    },
-
-    {
-      id: 8,
-      title: 'Efsanevi Seri',
-      desc: '100 günlük kesintisiz başarı serisine ulaş.',
-      icon: '👑',
-      category: 'Seri',
-      rarity: 'legendary',
-      unlocked: false,
-      progress: 4,
-      target: 100,
-    },
-
-    // ---------------------------------------------------------
-    // HEDEFLER
-    // ---------------------------------------------------------
     {
       id: 9,
       title: 'Hedef Avcısı',
@@ -141,50 +178,10 @@ export default function Badges() {
       icon: '🏹',
       category: 'Hedefler',
       rarity: 'common',
-      unlocked: false,
-      progress: 6,
+      unlocked: completedGoals >= 10,
+      progress: Math.min(completedGoals, 10),
       target: 10,
     },
-
-    {
-      id: 10,
-      title: 'Hedef Ustası',
-      desc: 'Toplam 50 hedef tamamla.',
-      icon: '🎯',
-      category: 'Hedefler',
-      rarity: 'rare',
-      unlocked: false,
-      progress: 6,
-      target: 50,
-    },
-
-    {
-      id: 11,
-      title: 'Zirveye Doğru',
-      desc: '100 hedefi başarıyla tamamla.',
-      icon: '🏆',
-      category: 'Hedefler',
-      rarity: 'epic',
-      unlocked: false,
-      progress: 6,
-      target: 100,
-    },
-
-    {
-      id: 12,
-      title: 'Hedeflerin Efendisi',
-      desc: '500 hedef tamamlayarak büyük bir kilometre taşına ulaş.',
-      icon: '💎',
-      category: 'Hedefler',
-      rarity: 'legendary',
-      unlocked: false,
-      progress: 6,
-      target: 500,
-    },
-
-    // ---------------------------------------------------------
-    // ÇALIŞMA
-    // ---------------------------------------------------------
     {
       id: 13,
       title: 'Çalışma Modu',
@@ -192,38 +189,10 @@ export default function Badges() {
       icon: '📚',
       category: 'Çalışma',
       rarity: 'common',
-      unlocked: false,
-      progress: 0,
+      unlocked: studySessionCount >= 1,
+      progress: Math.min(studySessionCount, 1),
       target: 1,
     },
-
-    {
-      id: 14,
-      title: 'Odaklanmış Zihin',
-      desc: '10 çalışma oturumunu tamamla.',
-      icon: '🧠',
-      category: 'Çalışma',
-      rarity: 'rare',
-      unlocked: false,
-      progress: 0,
-      target: 10,
-    },
-
-    {
-      id: 15,
-      title: 'Derin Çalışma',
-      desc: '50 çalışma oturumunu tamamla.',
-      icon: '🔬',
-      category: 'Çalışma',
-      rarity: 'epic',
-      unlocked: false,
-      progress: 0,
-      target: 50,
-    },
-
-    // ---------------------------------------------------------
-    // POMODORO
-    // ---------------------------------------------------------
     {
       id: 16,
       title: 'İlk Odak',
@@ -231,11 +200,10 @@ export default function Badges() {
       icon: '🍅',
       category: 'Pomodoro',
       rarity: 'common',
-      unlocked: false,
-      progress: 0,
+      unlocked: pomodoroCount >= 1,
+      progress: Math.min(pomodoroCount, 1),
       target: 1,
     },
-
     {
       id: 17,
       title: 'Odak Makinesi',
@@ -243,53 +211,10 @@ export default function Badges() {
       icon: '⚙️',
       category: 'Pomodoro',
       rarity: 'rare',
-      unlocked: false,
-      progress: 0,
+      unlocked: pomodoroCount >= 25,
+      progress: Math.min(pomodoroCount, 25),
       target: 25,
     },
-
-    {
-      id: 18,
-      title: 'Zihin Maratonu',
-      desc: '100 Pomodoro seansını tamamla.',
-      icon: '🏃',
-      category: 'Pomodoro',
-      rarity: 'epic',
-      unlocked: false,
-      progress: 0,
-      target: 100,
-    },
-
-    // ---------------------------------------------------------
-    // PLANLAMA
-    // ---------------------------------------------------------
-    {
-      id: 19,
-      title: 'Ajanda Üstadı',
-      desc: 'Planını 3 gün arka arkaya düzenli şekilde doldur.',
-      icon: '📅',
-      category: 'Planlama',
-      rarity: 'rare',
-      unlocked: false,
-      progress: 0,
-      target: 3,
-    },
-
-    {
-      id: 20,
-      title: 'Planlı Öğrenci',
-      desc: '7 gün boyunca çalışma planını düzenli kullan.',
-      icon: '🗓️',
-      category: 'Planlama',
-      rarity: 'rare',
-      unlocked: false,
-      progress: 0,
-      target: 7,
-    },
-
-    // ---------------------------------------------------------
-    // NOTLAR
-    // ---------------------------------------------------------
     {
       id: 21,
       title: 'Hızlı Kalem',
@@ -297,26 +222,10 @@ export default function Badges() {
       icon: '✍️',
       category: 'Notlar',
       rarity: 'common',
-      unlocked: true,
-      progress: 1,
+      unlocked: noteCount >= 1,
+      progress: Math.min(noteCount, 1),
       target: 1,
     },
-
-    {
-      id: 22,
-      title: 'Bilgi Avcısı',
-      desc: '25 faydalı not oluştur.',
-      icon: '🔎',
-      category: 'Notlar',
-      rarity: 'rare',
-      unlocked: false,
-      progress: 0,
-      target: 25,
-    },
-
-    // ---------------------------------------------------------
-    // SORU ÇÖZME
-    // ---------------------------------------------------------
     {
       id: 23,
       title: 'Soru Çözücü',
@@ -324,223 +233,81 @@ export default function Badges() {
       icon: '📝',
       category: 'Sorular',
       rarity: 'rare',
-      unlocked: false,
-      progress: 0,
+      unlocked: solvedQuestionCount >= 100,
+      progress: Math.min(solvedQuestionCount, 100),
       target: 100,
     },
-
-    {
-      id: 24,
-      title: 'Soru Ustası',
-      desc: '500 soru çöz.',
-      icon: '🧩',
-      category: 'Sorular',
-      rarity: 'epic',
-      unlocked: false,
-      progress: 0,
-      target: 500,
-    },
-
-    {
-      id: 25,
-      title: 'Sınav Canavarı',
-      desc: '1000 soru çözerek büyük bir kilometre taşına ulaş.',
-      icon: '👹',
-      category: 'Sorular',
-      rarity: 'legendary',
-      unlocked: false,
-      progress: 0,
-      target: 1000,
-    },
-
-    // ---------------------------------------------------------
-    // ÖZEL
-    // ---------------------------------------------------------
-    {
-      id: 26,
-      title: 'Gece Kuşu',
-      desc: 'Geç saatlerde bir çalışma hedefini tamamla.',
-      icon: '🦉',
-      category: 'Özel',
-      rarity: 'rare',
-      unlocked: false,
-    },
-
-    {
-      id: 27,
-      title: 'Sabah Savaşçısı',
-      desc: 'Sabah erken saatlerde ilk hedefini tamamla.',
-      icon: '🌅',
-      category: 'Özel',
-      rarity: 'rare',
-      unlocked: false,
-    },
-
-    {
-      id: 28,
-      title: 'Pes Etmeyen',
-      desc: 'Zor bir günün ardından ertesi gün tekrar çalışmaya dön.',
-      icon: '💪',
-      category: 'Özel',
-      rarity: 'epic',
-      unlocked: false,
-    },
-
-    {
-      id: 29,
-      title: 'Ajan Üstadı',
-      desc: 'Uzun vadeli çalışma serisini koruyarak istikrarını kanıtla.',
-      icon: '🕵️',
-      category: 'Özel',
-      rarity: 'legendary',
-      unlocked: false,
-    },
-  ]);
-
-  const [selectedCategory, setSelectedCategory] = useState('Tümü');
+  ], [completedGoals, pomodoroCount, studySessionCount, solvedQuestionCount, noteCount]);
 
   const categories = useMemo(() => {
-    return [
-      'Tümü',
-      ...Array.from(new Set(badges.map((badge) => badge.category))),
-    ];
+    return ['Tümü', ...Array.from(new Set(badges.map((b) => b.category)))];
   }, [badges]);
 
   const filteredBadges = useMemo(() => {
-    if (selectedCategory === 'Tümü') {
-      return badges;
-    }
-
-    return badges.filter(
-      (badge) => badge.category === selectedCategory
-    );
+    if (selectedCategory === 'Tümü') return badges;
+    return badges.filter((b) => b.category === selectedCategory);
   }, [badges, selectedCategory]);
 
-  const unlockedCount = badges.filter(
-    (badge) => badge.unlocked
-  ).length;
+  const unlockedCount = badges.filter((b) => b.unlocked).length;
+  const completionPercentage = badges.length > 0 ? Math.round((unlockedCount / badges.length) * 100) : 0;
 
-  const completionPercentage = Math.round(
-    (unlockedCount / badges.length) * 100
-  );
-
-  const getRarityLabel = (rarity: Badge['rarity']) => {
+  const getRarityLabel = (rarity: Rarity) => {
     switch (rarity) {
-      case 'common':
-        return 'Yaygın';
-      case 'rare':
-        return 'Nadir';
-      case 'epic':
-        return 'Destansı';
-      case 'legendary':
-        return 'Efsanevi';
+      case 'common': return 'Yaygın';
+      case 'rare': return 'Nadir';
+      case 'epic': return 'Destansı';
+      case 'legendary': return 'Efsanevi';
     }
   };
 
-  const getRarityClass = (rarity: Badge['rarity']) => {
+  const getRarityClass = (rarity: Rarity) => {
     switch (rarity) {
-      case 'common':
-        return 'bg-slate-800 text-slate-300 border-slate-700';
-
-      case 'rare':
-        return 'bg-blue-950/60 text-blue-300 border-blue-800';
-
-      case 'epic':
-        return 'bg-purple-950/60 text-purple-300 border-purple-800';
-
-      case 'legendary':
-        return 'bg-amber-950/60 text-amber-300 border-amber-700';
+      case 'common': return 'bg-slate-800 text-slate-300 border-slate-700';
+      case 'rare': return 'bg-blue-950/60 text-blue-300 border-blue-800';
+      case 'epic': return 'bg-purple-950/60 text-purple-300 border-purple-800';
+      case 'legendary': return 'bg-amber-950/60 text-amber-300 border-amber-700';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="p-8 max-w-6xl mx-auto">
+        <div className="bg-slate-900/70 rounded-3xl p-12 border border-slate-800 text-center">
+          <div className="text-4xl mb-4">🏆</div>
+          <p className="text-slate-400 text-sm">Başarıların yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8 animate-fadeIn">
-
-      {/* ---------------------------------------------------------
-          ÜST PANEL
-      --------------------------------------------------------- */}
-
+      {/* ÜST PANEL */}
       <div className="bg-slate-900/70 backdrop-blur-md p-8 rounded-3xl border border-slate-800 shadow-2xl">
-
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="text-4xl">🏆</span>
-
-              <div>
-                <h2 className="text-2xl font-extrabold text-white">
-                  Rozet & Başarı Koleksiyonum
-                </h2>
-
-                <p className="text-xs text-slate-400 mt-1">
-                  Hedeflerini tamamla, serini koru ve yeni başarıların
-                  kilidini aç.
-                </p>
-              </div>
-            </div>
-          </div>
-
           <div className="flex items-center gap-3">
-
+            <span className="text-4xl">🏆</span>
+            <div>
+              <h2 className="text-2xl font-extrabold text-white">Rozet & Başarı Koleksiyonum</h2>
+              <p className="text-xs text-slate-400 mt-1">Hedeflerini tamamla, serini koru ve yeni başarıların kilidini aç.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
             <div className="bg-teal-500/10 border border-teal-500/30 px-5 py-3 rounded-2xl text-center">
-              <div className="text-[10px] text-teal-400 font-bold uppercase tracking-wider">
-                Kazanılan
-              </div>
-
-              <div className="text-xl font-black text-white">
-                {unlockedCount}
-                <span className="text-slate-500">
-                  /{badges.length}
-                </span>
-              </div>
+              <div className="text-[10px] text-teal-400 font-bold uppercase tracking-wider">Kazanılan</div>
+              <div className="text-xl font-black text-white">{unlockedCount}<span className="text-slate-500">/{badges.length}</span></div>
             </div>
-
             <div className="bg-amber-500/10 border border-amber-500/30 px-5 py-3 rounded-2xl text-center">
-              <div className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
-                İlerleme
-              </div>
-
-              <div className="text-xl font-black text-white">
-                %{completionPercentage}
-              </div>
+              <div className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">İlerleme</div>
+              <div className="text-xl font-black text-white">%{completionPercentage}</div>
             </div>
-
-          </div>
-        </div>
-
-        {/* Genel ilerleme */}
-
-        <div className="mt-7">
-
-          <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-2">
-            <span>Rozet koleksiyonu</span>
-            <span>
-              {unlockedCount} / {badges.length}
-            </span>
-          </div>
-
-          <div className="h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-
-            <div
-              className="h-full bg-gradient-to-r from-teal-400 via-blue-500 to-purple-500 transition-all duration-700"
-              style={{
-                width: `${completionPercentage}%`,
-              }}
-            />
-
           </div>
         </div>
       </div>
 
-      {/* ---------------------------------------------------------
-          KATEGORİLER
-      --------------------------------------------------------- */}
-
+      {/* KATEGORİLER */}
       <div className="flex gap-2 overflow-x-auto pb-2">
-
         {categories.map((category) => (
-
           <button
             key={category}
             type="button"
@@ -553,29 +320,15 @@ export default function Badges() {
           >
             {category}
           </button>
-
         ))}
-
       </div>
 
-      {/* ---------------------------------------------------------
-          ROZETLER
-      --------------------------------------------------------- */}
-
+      {/* ROZETLER */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
         {filteredBadges.map((badge) => {
-
           const progress = badge.progress ?? 0;
           const target = badge.target ?? 0;
-
-          const progressPercentage =
-            target > 0
-              ? Math.min(
-                  100,
-                  Math.round((progress / target) * 100)
-                )
-              : 0;
+          const progressPercentage = target > 0 ? Math.min(100, Math.round((progress / target) * 100)) : 0;
 
           return (
             <div
@@ -586,131 +339,38 @@ export default function Badges() {
                   : 'bg-slate-950/50 border-slate-800 opacity-75 hover:opacity-100'
               }`}
             >
+              <div className="flex items-start justify-between gap-3">
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border ${badge.unlocked ? 'bg-slate-800 border-teal-500/30' : 'bg-slate-900 border-slate-800 grayscale'}`}>
+                  {badge.unlocked ? badge.icon : '🔒'}
+                </div>
+                <span className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${getRarityClass(badge.rarity)}`}>
+                  {getRarityLabel(badge.rarity)}
+                </span>
+              </div>
+              <h3 className="font-bold text-white text-lg mt-5">{badge.title}</h3>
+              <p className="text-xs text-slate-400 mt-2 leading-relaxed min-h-[40px]">{badge.desc}</p>
 
-              {/* Parlaklık */}
-
-              {badge.unlocked && (
-                <div className="absolute top-0 right-0 w-24 h-24 bg-teal-400/10 blur-3xl rounded-full" />
+              {!badge.unlocked && typeof badge.target === 'number' && (
+                <div className="mt-5">
+                  <div className="flex justify-between text-[9px] font-bold text-slate-500 mb-2">
+                    <span>İlerleme</span>
+                    <span>{progress} / {target}</span>
+                  </div>
+                  <div className="h-2 bg-slate-950 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-teal-400 to-blue-500 transition-all" style={{ width: `${progressPercentage}%` }} />
+                  </div>
+                </div>
               )}
 
-              <div className="relative">
-
-                <div className="flex items-start justify-between gap-3">
-
-                  <div
-                    className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border ${
-                      badge.unlocked
-                        ? 'bg-slate-800 border-teal-500/30'
-                        : 'bg-slate-900 border-slate-800 grayscale'
-                    }`}
-                  >
-                    {badge.unlocked ? badge.icon : '🔒'}
-                  </div>
-
-                  <span
-                    className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${getRarityClass(
-                      badge.rarity
-                    )}`}
-                  >
-                    {getRarityLabel(badge.rarity)}
-                  </span>
-
-                </div>
-
-                <h3 className="font-bold text-white text-lg mt-5">
-                  {badge.title}
-                </h3>
-
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed min-h-[40px]">
-                  {badge.desc}
-                </p>
-
-                {/* İlerleme */}
-
-                {!badge.unlocked &&
-                  typeof badge.target === 'number' && (
-                    <div className="mt-5">
-
-                      <div className="flex justify-between text-[9px] font-bold text-slate-500 mb-2">
-                        <span>İlerleme</span>
-
-                        <span>
-                          {progress} / {target}
-                        </span>
-                      </div>
-
-                      <div className="h-2 bg-slate-950 rounded-full overflow-hidden">
-
-                        <div
-                          className="h-full bg-gradient-to-r from-teal-400 to-blue-500 transition-all"
-                          style={{
-                            width: `${progressPercentage}%`,
-                          }}
-                        />
-
-                      </div>
-
-                    </div>
-                  )}
-
-                <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
-
-                  <span
-                    className={`text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider ${
-                      badge.unlocked
-                        ? 'bg-teal-950 text-teal-300 border border-teal-800'
-                        : 'bg-slate-900 text-slate-500 border border-slate-800'
-                    }`}
-                  >
-                    {badge.unlocked
-                      ? 'Kazanıldı ✨'
-                      : 'Kilitli 🔒'}
-                  </span>
-
-                  {badge.unlocked && (
-                    <span className="text-xs">
-                      ⭐
-                    </span>
-                  )}
-
-                </div>
-
+              <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
+                <span className={`text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider ${badge.unlocked ? 'bg-teal-950 text-teal-300 border border-teal-800' : 'bg-slate-900 text-slate-500 border border-slate-800'}`}>
+                  {badge.unlocked ? 'Kazanıldı ✨' : 'Kilitli 🔒'}
+                </span>
               </div>
             </div>
           );
         })}
-
       </div>
-
-      {/* ---------------------------------------------------------
-          MOTİVASYON
-      --------------------------------------------------------- */}
-
-      <div className="bg-gradient-to-r from-teal-950/70 via-slate-900/80 to-purple-950/70 border border-teal-900/50 rounded-3xl p-7">
-
-        <div className="flex items-start gap-4">
-
-          <div className="text-3xl">
-            🚀
-          </div>
-
-          <div>
-
-            <h3 className="text-white font-extrabold">
-              Bir sonraki rozetin seni bekliyor.
-            </h3>
-
-            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              Büyük başarılar tek seferde gelmez. Her gün küçük bir
-              hedefi tamamlamak, uzun vadede seni çok daha ileri taşır.
-            </p>
-
-          </div>
-
-        </div>
-
-      </div>
-
     </div>
   );
 }
