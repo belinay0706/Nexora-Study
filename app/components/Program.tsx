@@ -7,13 +7,13 @@ const days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartes
 export default function Program() {
   const [selectedDay, setSelectedDay] = useState('Pazartesi');
   const [schedule, setSchedule] = useState<{ [key: string]: string[] }>({
-    Pazartesi: ['Matematik - Türev Çalışması (09:00)', 'Fizik - Vektörler (14:00)'],
-    Salı: ['Paragraf Çözümü (10:00)', 'Kimya - Mol Kavramı (15:00)'],
-    Çarşamba: ['Geometri - Üçgenler (11:00)'],
-    Perşembe: ['İspanyolca Pratik (13:00)', 'Biyoloji - Hücre (16:00)'],
-    Cuma: ['Türkçe Deneme Sınavı (10:00)'],
-    Cumartesi: ['Genel Tekrar ve Soru Çözümü (14:00)'],
-    Pazar: ['Dinlenme ve Planlama (20:00)'],
+    Pazartesi: [],
+    Salı: [],
+    Çarşamba: [],
+    Perşembe: [],
+    Cuma: [],
+    Cumartesi: [],
+    Pazar: [],
   });
 
   const [newLesson, setNewLesson] = useState('');
@@ -96,6 +96,7 @@ export default function Program() {
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Ders veya Çalışma Adı</label>
               <input
+                key={selectedDay}
                 type="text"
                 value={newLesson}
                 onChange={(e) => setNewLesson(e.target.value)}
