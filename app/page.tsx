@@ -55,6 +55,9 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState('anasayfa');
   const [currentTheme, setCurrentTheme] = useState('nexora-gradient');
 
+  // MOBİL MENÜ İÇİN STATE
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -762,8 +765,21 @@ export default function Page() {
           onBackToLogin={handleLogout}
         />
       ) : (
-        <div className="min-h-screen flex">
+        <div className="min-h-screen flex relative">
 
+          {/* MOBİLDE SOL ÜST KÖŞEDEKİ ÜÇ ÇİZGİLİ (☰) MENÜ BUTONU */}
+          <div className="md:hidden fixed top-4 left-4 z-20">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg active:scale-95 transition-all"
+              type="button"
+              aria-label="Menüyü Aç"
+            >
+              <span className="text-xl">☰</span>
+            </button>
+          </div>
+
+          {/* SIDEBAR BİLEŞENİ */}
           <Sidebar
             activeTab={activeTab}
             setActiveTab={setActiveTab}
@@ -772,6 +788,8 @@ export default function Page() {
             onLogout={handleLogout}
             currentUserName={currentUserName}
             userEmail={user.email}
+            isOpen={isSidebarOpen}
+            setIsOpen={setIsSidebarOpen}
           />
 
           <main
