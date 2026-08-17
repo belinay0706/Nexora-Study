@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* 1. Nexora Özel Gradyan */
+.nexora-gradient {
+  background: linear-gradient(135deg, #0d9488 0%, #0d9488 33%, #2563eb 66%, #9333ea 100%);
+}
+
+.nexora-text-gradient {
+  background: linear-gradient(135deg, #0d9488 0%, #2563eb 50%, #9333ea 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* 2. Standart Koyu Tema (Obsidian / Dark) */
+.theme-dark { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #090d16 100%); color: #fff; }
+
+/* 3. Koyu Renkli Temalar */
+.theme-dark-red { background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%); color: #fff; }
+.theme-dark-orange { background: linear-gradient(135deg, #7c2d12 0%, #9a3412 50%, #431407 100%); color: #fff; }
+.theme-dark-yellow { background: linear-gradient(135deg, #713f12 0%, #854d0e 50%, #422006 100%); color: #fff; }
+.theme-dark-green { background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #022c22 100%); color: #fff; }
+.theme-dark-blue { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #0f172a 100%); color: #fff; }
+.theme-dark-purple { background: linear-gradient(135deg, #3b0764 0%, #581c87 50%, #1e1b4b 100%); color: #fff; }
+.theme-dark-pink { background: linear-gradient(135deg, #831843 0%, #9f1239 50%, #500724 100%); color: #fff; }
+
+/* 4. Açık Renkli Temalar */
+.theme-light-red { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 50%, #fca5a5 100%); color: #0f172a; }
+.theme-light-yellow { background: linear-gradient(135deg, #fef9c3 0%, #fef08a 50%, #fde047 100%); color: #0f172a; }
+.theme-light-green { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #a7f3d0 100%); color: #0f172a; }
+.theme-light-blue { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%); color: #0f172a; }
+.theme-light-purple { background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 50%, #d8b4fe 100%); color: #0f172a; }
+.theme-light-pink { background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 50%, #f472b6 100%); color: #0f172a; }
