@@ -317,7 +317,7 @@ export default function DigitalAgenda() {
 
   /*
    * ------------------------------------------------------------
-   * FIREBASE'E AJANDAYI KAYDET (ROZET BAĞLANTILI)
+   * FIREBASE'E AJANDAYI KAYDET VE ROZET SAYAÇLARI
    * ------------------------------------------------------------
    */
 
@@ -350,10 +350,7 @@ export default function DigitalAgenda() {
           serverTimestamp(),
       };
 
-      /*
-       * Ajanda gününde ilk kez içerik yazıldığında
-       * rozet sistemine katkı olması için sayaç artırılır.
-       */
+      // Rozet sisteminin takip ettiği gün sayacı tetikleyicisi
       if (countActivity) {
         updateData.agendaDaysUsed =
           increment(1);
@@ -384,7 +381,7 @@ export default function DigitalAgenda() {
 
   /*
    * ------------------------------------------------------------
-   * GÜNÜN VERİSİNİ GÜNCELLE VE ROZET KONTROLÜ
+   * GÜNÜN VERİSİNİ GÜNCELLE VE İLK KEZ DOLUM KONTROLÜ
    * ------------------------------------------------------------
    */
 
@@ -399,7 +396,7 @@ export default function DigitalAgenda() {
         stickers: [],
       };
 
-    // Günün daha önce dolu olup olmadığını kontrol et
+    // Günün daha önce tamamen boş olup olmadığını kontrol ediyoruz
     const wasEmpty =
       !currentDay.content.trim() &&
       !currentDay.goal.trim();
@@ -413,7 +410,7 @@ export default function DigitalAgenda() {
       },
     };
 
-    // Eğer daha önceden boşsa ve şu an bir şeyler yazıldıysa rozet sayacını tetikle
+    // Eğer daha önceden boşsa ve yeni veri girildiyse rozet tetiklensin
     const shouldCountActivity =
       wasEmpty && value.trim().length > 0;
 

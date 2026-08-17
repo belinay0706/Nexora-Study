@@ -39,6 +39,22 @@ interface GoalHistory {
   [date: string]: GoalHistoryDay;
 }
 
+// 🏆 Rozet Tanımları
+interface Badge {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  unlockedAt: string | null;
+}
+
+const AVAILABLE_BADGES: Omit<Badge, 'unlockedAt'>[] = [
+  { id: 'first_goal', title: 'İlk Adım', description: 'İlk hedefini tamamla.', icon: '🎯' },
+  { id: 'streak_3', title: 'İstikrar Kıvılcımı', description: '3 günlük seri yakala.', icon: '🔥' },
+  { id: 'streak_7', title: 'Hız Kesmiyorsun', description: '7 günlük seri yakala.', icon: '⚡' },
+  { id: 'master_10', title: 'Hedef Avcısı', description: 'Toplam 10 günü tamamen bitir.', icon: '🏆' },
+];
+
 const getLocalDateKey = (date = new Date()) => {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
@@ -97,6 +113,8 @@ export default function Goals() {
   const [totalCompletedDays, setTotalCompletedDays] =
     useState(0);
 
+  const [badges, setBadges] = useState<Badge[]>([]);
+
   const [newGoalText, setNewGoalText] =
     useState('');
 
@@ -133,6 +151,7 @@ export default function Goals() {
           setCurrentStreak(0);
           setBestStreak(0);
           setTotalCompletedDays(0);
+          setBadges([]);
           setSaveError('');
           setSaveSuccess(false);
 
@@ -147,6 +166,35 @@ export default function Goals() {
 
     return () => unsubscribe();
   }, []);
+
+  /*
+   * ROZETLERİ HESAPLA / KONTROL ET
+   */
+  const checkAndUnlockBadges = (
+    currentTotalDays: number,
+    streak: number,
+    existingBadges: Badge[]
+  ) => {
+    const now = new Date().toISOString();
+    
+    return AVAILABLE_BADGES.map((b) => {
+      const existing = existingBadges.find((item) => item.id === b.id);
+      if (existing && existing.unlockedAt) {
+        return existing;
+      }
+
+      let unlocked = false;
+      if (b.id === 'first_goal' && currentTotalDays >= 1) unlocked = true;
+      if (b.id === 'streak_3' && streak >= 3) unlocked = true;
+      if (b.id === 'streak_7' && streak >= 7) unlocked = true;
+      if (b.id === 'master_10' && currentTotalDays >= 10) unlocked = true;
+
+      return {
+        ...b,
+        unlockedAt: unlocked ? (existing?.unlockedAt || now) : null,
+      };
+    });
+  };
 
   /*
    * FIREBASE'DEN VERİLERİ YÜKLE
@@ -173,12 +221,11 @@ export default function Goals() {
         setCurrentStreak(0);
         setBestStreak(0);
         setTotalCompletedDays(0);
-
+        setBadges(checkAndUnlockBadges(0, 0, []));
         return;
       }
 
-      const data =
-        profileSnap.data();
+      const data = profileSnap.data();
 
       const storedGoals =
         Array.isArray(data.goals)
@@ -206,20 +253,16 @@ export default function Goals() {
           ? data.totalCompletedDays
           : 0;
 
+      const storedBadges = Array.isArray(data.badges)
+        ? (data.badges as Badge[])
+        : [];
+
       setGoals(storedGoals);
       setGoalHistory(storedHistory);
-
-      setCurrentStreak(
-        storedCurrentStreak
-      );
-
-      setBestStreak(
-        storedBestStreak
-      );
-
-      setTotalCompletedDays(
-        storedTotalCompletedDays
-      );
+      setCurrentStreak(storedCurrentStreak);
+      setBestStreak(storedBestStreak);
+      setTotalCompletedDays(storedTotalCompletedDays);
+      setBadges(checkAndUnlockBadges(storedTotalCompletedDays, storedCurrentStreak, storedBadges));
     } catch (error) {
       console.error(
         'Hedefler yüklenemedi:',
@@ -242,7 +285,8 @@ export default function Goals() {
     updatedHistory: GoalHistory,
     updatedCurrentStreak: number,
     updatedBestStreak: number,
-    updatedTotalCompletedDays: number
+    updatedTotalCompletedDays: number,
+    updatedBadges: Badge[]
   ) => {
     if (!user) {
       return false;
@@ -267,8 +311,8 @@ export default function Goals() {
           currentStreak: updatedCurrentStreak,
           bestStreak: updatedBestStreak,
           totalCompletedDays: updatedTotalCompletedDays,
-          // 🏆 Rozet sisteminin anlık okuyabilmesi için ek alanlar:
-          completedGoalsCount: updatedTotalCompletedDays, 
+          completedGoalsCount: updatedTotalCompletedDays,
+          badges: updatedBadges,
           updatedAt: serverTimestamp(),
         },
         {
@@ -354,13 +398,8 @@ export default function Goals() {
           goal.date === todayKey
       );
 
-    /*
-     * Bugün hiç hedef yoksa
-     * history kaydını tamamen kaldır.
-     */
     if (todayGoals.length === 0) {
       delete updatedHistory[todayKey];
-
       return updatedHistory;
     }
 
@@ -377,17 +416,67 @@ export default function Goals() {
       totalTodayGoals;
 
     updatedHistory[todayKey] = {
-      completed:
-        dayCompleted,
-
-      completedCount:
-        completedToday,
-
-      totalCount:
-        totalTodayGoals,
+      completed: dayCompleted,
+      completedCount: completedToday,
+      totalCount: totalTodayGoals,
     };
 
     return updatedHistory;
+  };
+
+  /*
+   * ORTAK STATE GÜNCELLEME VE KAYIT YARDIMCISI
+   */
+  const processAndUpdate = async (
+    updatedGoals: Goal[],
+    updatedHistory: GoalHistory
+  ) => {
+    const calculatedStreak = calculateStreak(updatedHistory, todayKey);
+    const newBestStreak = Math.max(bestStreak, calculatedStreak);
+    const newTotalCompletedDays = Object.values(updatedHistory).filter(
+      (day) => day.completed
+    ).length;
+
+    const updatedBadges = checkAndUnlockBadges(
+      newTotalCompletedDays,
+      calculatedStreak,
+      badges
+    );
+
+    const previousGoals = [...goals];
+    const previousHistory = { ...goalHistory };
+    const previousStreak = currentStreak;
+    const previousBest = bestStreak;
+    const previousTotalDays = totalCompletedDays;
+    const previousBadges = [...badges];
+
+    setGoals(updatedGoals);
+    setGoalHistory(updatedHistory);
+    setCurrentStreak(calculatedStreak);
+    setBestStreak(newBestStreak);
+    setTotalCompletedDays(newTotalCompletedDays);
+    setBadges(updatedBadges);
+
+    const saved = await saveGoalData(
+      updatedGoals,
+      updatedHistory,
+      calculatedStreak,
+      newBestStreak,
+      newTotalCompletedDays,
+      updatedBadges
+    );
+
+    if (!saved) {
+      setGoals(previousGoals);
+      setGoalHistory(previousHistory);
+      setCurrentStreak(previousStreak);
+      setBestStreak(previousBest);
+      setTotalCompletedDays(previousTotalDays);
+      setBadges(previousBadges);
+      return false;
+    }
+
+    return true;
   };
 
   /*
@@ -398,8 +487,7 @@ export default function Goals() {
   ) => {
     event.preventDefault();
 
-    const cleanText =
-      newGoalText.trim();
+    const cleanText = newGoalText.trim();
 
     if (
       !cleanText ||
@@ -410,110 +498,19 @@ export default function Goals() {
       return;
     }
 
-    const previousGoals = [...goals];
-
-    const previousHistory = {
-      ...goalHistory,
-    };
-
-    const previousCurrentStreak =
-      currentStreak;
-
-    const previousBestStreak =
-      bestStreak;
-
-    const previousTotalCompletedDays =
-      totalCompletedDays;
-
     const newGoal: Goal = {
-      id:
-        `${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2)}`,
-
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       text: cleanText,
-
       completed: false,
-
       date: todayKey,
-
       completedAt: null,
     };
 
-    const updatedGoals = [
-      ...goals,
-      newGoal,
-    ];
-
-    const updatedHistory =
-      buildTodayHistory(
-        updatedGoals,
-        goalHistory
-      );
-
-    const calculatedStreak =
-      calculateStreak(
-        updatedHistory,
-        todayKey
-      );
-
-    const newBestStreak =
-      Math.max(
-        bestStreak,
-        calculatedStreak
-      );
-
-    const newTotalCompletedDays =
-      Object.values(
-        updatedHistory
-      ).filter(
-        (day) =>
-          day.completed
-      ).length;
-
-    /*
-     * UI'ı hemen güncelle.
-     */
-    setGoals(updatedGoals);
-    setGoalHistory(updatedHistory);
-    setCurrentStreak(calculatedStreak);
-    setBestStreak(newBestStreak);
-    setTotalCompletedDays(
-      newTotalCompletedDays
-    );
+    const updatedGoals = [...goals, newGoal];
+    const updatedHistory = buildTodayHistory(updatedGoals, goalHistory);
 
     setNewGoalText('');
-
-    /*
-     * FIREBASE
-     */
-    const saved =
-      await saveGoalData(
-        updatedGoals,
-        updatedHistory,
-        calculatedStreak,
-        newBestStreak,
-        newTotalCompletedDays
-      );
-
-    /*
-     * Kayıt başarısızsa geri dön.
-     */
-    if (!saved) {
-      setGoals(previousGoals);
-      setGoalHistory(previousHistory);
-      setCurrentStreak(
-        previousCurrentStreak
-      );
-      setBestStreak(
-        previousBestStreak
-      );
-      setTotalCompletedDays(
-        previousTotalCompletedDays
-      );
-
-      setNewGoalText(cleanText);
-    }
+    await processAndUpdate(updatedGoals, updatedHistory);
   };
 
   /*
@@ -530,595 +527,186 @@ export default function Goals() {
       return;
     }
 
-    const previousGoals = [...goals];
+    const updatedGoals = goals.map((goal) => {
+      if (goal.id !== goalId) {
+        return goal;
+      }
 
-    const previousHistory = {
-      ...goalHistory,
-    };
+      const nextCompleted = !goal.completed;
 
-    const previousCurrentStreak =
-      currentStreak;
+      return {
+        ...goal,
+        completed: nextCompleted,
+        completedAt: nextCompleted ? new Date().toISOString() : null,
+      };
+    });
 
-    const previousBestStreak =
-      bestStreak;
-
-    const previousTotalCompletedDays =
-      totalCompletedDays;
-
-    const updatedGoals =
-      goals.map((goal) => {
-        if (
-          goal.id !== goalId
-        ) {
-          return goal;
-        }
-
-        const nextCompleted =
-          !goal.completed;
-
-        return {
-          ...goal,
-
-          completed:
-            nextCompleted,
-
-          completedAt:
-            nextCompleted
-              ? new Date().toISOString()
-              : null,
-        };
-      });
-
-    const updatedHistory =
-      buildTodayHistory(
-        updatedGoals,
-        goalHistory
-      );
-
-    const calculatedStreak =
-      calculateStreak(
-        updatedHistory,
-        todayKey
-      );
-
-    const newBestStreak =
-      Math.max(
-        bestStreak,
-        calculatedStreak
-      );
-
-    const newTotalCompletedDays =
-      Object.values(
-        updatedHistory
-      ).filter(
-        (day) =>
-          day.completed
-      ).length;
-
-    setGoals(updatedGoals);
-    setGoalHistory(updatedHistory);
-    setCurrentStreak(calculatedStreak);
-    setBestStreak(newBestStreak);
-    setTotalCompletedDays(
-      newTotalCompletedDays
-    );
-
-    const saved =
-      await saveGoalData(
-        updatedGoals,
-        updatedHistory,
-        calculatedStreak,
-        newBestStreak,
-        newTotalCompletedDays
-      );
-
-    if (!saved) {
-      setGoals(previousGoals);
-      setGoalHistory(previousHistory);
-      setCurrentStreak(
-        previousCurrentStreak
-      );
-      setBestStreak(
-        previousBestStreak
-      );
-      setTotalCompletedDays(
-        previousTotalCompletedDays
-      );
-    }
+    const updatedHistory = buildTodayHistory(updatedGoals, goalHistory);
+    await processAndUpdate(updatedGoals, updatedHistory);
   };
 
   /*
-   * =====================================================
-   * GERÇEK HEDEF SİLME FONKSİYONU
-   * =====================================================
+   * HEDEF SİL
    */
   const deleteGoal = async (
     goalId: string
   ) => {
-    /*
-     * Kullanıcı yoksa işlem yapma.
-     */
-    if (!user) {
+    if (!user || isSaving || deletingGoalId !== null) {
       return;
     }
 
-    /*
-     * Başka bir kayıt veya silme işlemi
-     * devam ediyorsa yeni işlem başlatma.
-     */
-    if (
-      isSaving ||
-      deletingGoalId !== null
-    ) {
-      return;
-    }
+    const goalToDelete = goals.find((goal) => goal.id === goalId);
+    if (!goalToDelete) return;
 
-    /*
-     * Silinecek hedefi bul.
-     */
-    const goalToDelete =
-      goals.find(
-        (goal) =>
-          goal.id === goalId
-      );
+    const confirmed = window.confirm(
+      `"${goalToDelete.text}" hedefini silmek istediğine emin misin?`
+    );
 
-    if (!goalToDelete) {
-      return;
-    }
+    if (!confirmed) return;
 
-    /*
-     * ONAY
-     */
-    const confirmed =
-      window.confirm(
-        `"${goalToDelete.text}" hedefini silmek istediğine emin misin?`
-      );
-
-    if (!confirmed) {
-      return;
-    }
-
-    /*
-     * Eski verileri saklıyoruz.
-     * Firebase başarısız olursa geri döneceğiz.
-     */
-    const previousGoals =
-      [...goals];
-
-    const previousHistory = {
-      ...goalHistory,
-    };
-
-    const previousCurrentStreak =
-      currentStreak;
-
-    const previousBestStreak =
-      bestStreak;
-
-    const previousTotalCompletedDays =
-      totalCompletedDays;
-
-    /*
-     * Silinen hedefi belirle.
-     */
     setDeletingGoalId(goalId);
+    const updatedGoals = goals.filter((goal) => goal.id !== goalId);
+    const updatedHistory = buildTodayHistory(updatedGoals, goalHistory);
 
-    setSaveError('');
-
-    setSaveSuccess(false);
-
-    /*
-     * HEDEFİ GERÇEKTEN LİSTEDEN ÇIKAR.
-     */
-    const updatedGoals =
-      goals.filter(
-        (goal) =>
-          goal.id !== goalId
-      );
-
-    /*
-     * History'yi yeniden hesapla.
-     */
-    const updatedHistory =
-      buildTodayHistory(
-        updatedGoals,
-        goalHistory
-      );
-
-    /*
-     * Seri yeniden hesapla.
-     */
-    const calculatedStreak =
-      calculateStreak(
-        updatedHistory,
-        todayKey
-      );
-
-    /*
-     * Best streak asla düşmez.
-     */
-    const newBestStreak =
-      Math.max(
-        bestStreak,
-        calculatedStreak
-      );
-
-    /*
-     * Tamamlanan günleri yeniden hesapla.
-     */
-    const newTotalCompletedDays =
-      Object.values(
-        updatedHistory
-      ).filter(
-        (day) =>
-          day.completed
-      ).length;
-
-    /*
-     * EKRANDAN ANINDA SİL.
-     */
-    setGoals(updatedGoals);
-
-    setGoalHistory(
-      updatedHistory
-    );
-
-    setCurrentStreak(
-      calculatedStreak
-    );
-
-    setBestStreak(
-      newBestStreak
-    );
-
-    setTotalCompletedDays(
-      newTotalCompletedDays
-    );
-
-    /*
-     * FIREBASE'E KAYDET.
-     */
-    const saved =
-      await saveGoalData(
-        updatedGoals,
-        updatedHistory,
-        calculatedStreak,
-        newBestStreak,
-        newTotalCompletedDays
-      );
-
-    /*
-     * Firebase başarısızsa
-     * hedefi geri getir.
-     */
-    if (!saved) {
-      setGoals(previousGoals);
-
-      setGoalHistory(
-        previousHistory
-      );
-
-      setCurrentStreak(
-        previousCurrentStreak
-      );
-
-      setBestStreak(
-        previousBestStreak
-      );
-
-      setTotalCompletedDays(
-        previousTotalCompletedDays
-      );
-    }
-
-    /*
-     * Silme işlemi bitti.
-     */
+    await processAndUpdate(updatedGoals, updatedHistory);
     setDeletingGoalId(null);
   };
 
-  /*
-   * GÜN TAMAMLANDI MESAJI
-   */
-  const getDailyCompletionTitle =
-    () => {
-      if (!allGoalsCompleted) {
-        return '';
-      }
+  const getDailyCompletionTitle = () => {
+    if (!allGoalsCompleted) return '';
+    if (currentStreak <= 1) return '1. Gün Tamamlandı! 🏆';
+    return `${currentStreak}. Gün Tamamlandı! 🔥`;
+  };
 
-      if (
-        currentStreak <= 1
-      ) {
-        return '1. Gün Tamamlandı! 🏆';
-      }
-
-      return `${currentStreak}. Gün Tamamlandı! 🔥`;
-    };
-
-  /*
-   * YÜKLENİYOR
-   */
-  if (
-    authLoading ||
-    isLoading
-  ) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen p-8 flex items-center justify-center">
-
         <div className="bg-slate-900/70 backdrop-blur-md border border-slate-800 rounded-3xl px-8 py-6 text-center shadow-2xl">
-
           <div className="w-10 h-10 mx-auto mb-3 rounded-full border-4 border-white/10 border-t-teal-400 animate-spin" />
-
-          <p className="text-sm font-semibold text-white">
-            Hedeflerin yükleniyor...
-          </p>
-
-          <p className="text-xs text-slate-500 mt-2">
-            Firebase bağlantısı kuruluyor.
-          </p>
-
+          <p className="text-sm font-semibold text-white">Hedeflerin yükleniyor...</p>
         </div>
-
       </div>
     );
   }
 
-  /*
-   * GİRİŞ YOK
-   */
   if (!user) {
     return (
       <div className="min-h-screen p-8 flex items-center justify-center">
-
         <div className="bg-slate-900/70 border border-slate-800 rounded-3xl p-8 text-center shadow-2xl">
-
-          <div className="text-4xl mb-4">
-            🔐
-          </div>
-
-          <h2 className="text-xl font-bold text-white mb-2">
-            Hedefler
-          </h2>
-
-          <p className="text-sm text-slate-400">
-            Hedeflerini görmek için
-            giriş yapmalısın.
-          </p>
-
+          <div className="text-4xl mb-4">🔐</div>
+          <h2 className="text-xl font-bold text-white mb-2">Hedefler</h2>
+          <p className="text-sm text-slate-400">Hedeflerini görmek için giriş yapmalısın.</p>
         </div>
-
       </div>
     );
   }
 
-  /*
-   * =====================================================
-   * SAYFA
-   * =====================================================
-   */
   return (
     <div className="min-h-screen p-6 md:p-8">
-
       <div className="max-w-6xl mx-auto space-y-6">
 
         {/* BAŞLIK */}
-
         <div className="bg-slate-900/60 backdrop-blur-md p-7 rounded-3xl border border-slate-800 shadow-xl">
-
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-
             <div>
-
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-teal-950 text-teal-300 border border-teal-800 text-xs font-bold uppercase tracking-wider">
                 🎯 Hedef Merkezi
               </span>
-
               <h1 className="text-3xl font-extrabold text-white tracking-tight mt-3">
                 Bugün neyi tamamlayacağız?
               </h1>
-
               <p className="text-sm text-slate-400 mt-2">
-                Hedeflerini yaz, tamamladıkça
-                tikle ve serini büyüt.
+                Hedeflerini yaz, tamamladıkça tikle ve serini büyüt.
               </p>
-
             </div>
 
             <div className="bg-gradient-to-br from-orange-500/15 to-red-500/10 border border-orange-400/20 rounded-2xl px-5 py-4 min-w-[210px]">
-
               <div className="text-xs uppercase tracking-wider text-orange-300 font-bold">
                 🔥 Günlük Seri
               </div>
-
               <div className="text-3xl font-black text-white mt-1">
                 {currentStreak} gün
               </div>
-
               <div className="text-[11px] text-slate-400 mt-1">
-                En uzun seri:{' '}
-                {bestStreak} gün
+                En uzun seri: {bestStreak} gün
               </div>
-
             </div>
-
           </div>
-
         </div>
 
-        {/* KAYIT DURUMU */}
-
-        {(isSaving ||
-          saveSuccess ||
-          saveError) && (
-
-          <div
-            className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${
-              saveError
-                ? 'bg-red-500/10 border-red-400/20 text-red-300'
-                : saveSuccess
-                ? 'bg-emerald-500/10 border-emerald-400/20 text-emerald-300'
-                : 'bg-blue-500/10 border-blue-400/20 text-blue-300'
-            }`}
-          >
-
-            {isSaving &&
-              '⏳ Kaydediliyor...'}
-
-            {!isSaving &&
-              saveSuccess &&
-              '✓ Başarıyla kaydedildi'}
-
-            {!isSaving &&
-              saveError &&
-              `⚠️ ${saveError}`}
-
+        {/* 🏆 ROZETLER BÖLÜMÜ */}
+        <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6">
+          <h2 className="font-extrabold text-white text-xl mb-4">
+            🎖️ Başarı Rozetleri
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {badges.map((badge) => {
+              const isUnlocked = badge.unlockedAt !== null;
+              return (
+                <div
+                  key={badge.id}
+                  className={`rounded-2xl p-4 border flex items-center gap-4 transition-all ${
+                    isUnlocked
+                      ? 'bg-amber-500/10 border-amber-400/30 text-white'
+                      : 'bg-slate-950/40 border-slate-800/80 text-slate-500 opacity-60'
+                  }`}
+                >
+                  <div className="text-3xl p-2 rounded-xl bg-slate-900 border border-slate-800">
+                    {badge.icon}
+                  </div>
+                  <div>
+                    <h3 className={`text-sm font-bold ${isUnlocked ? 'text-amber-300' : 'text-slate-400'}`}>
+                      {badge.title}
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {badge.description}
+                    </p>
+                    <div className="text-[10px] font-semibold mt-1">
+                      {isUnlocked ? '✨ Kazanıldı' : '🔒 Kilitli'}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-
-        )}
-
-        {/* İSTATİSTİKLER */}
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-
-            <div className="text-xs text-slate-400 font-semibold">
-              Bugünün Hedefleri
-            </div>
-
-            <div className="text-2xl font-black text-white mt-1">
-              {completedCount}/{totalToday}
-            </div>
-
-          </div>
-
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-
-            <div className="text-xs text-slate-400 font-semibold">
-              Bugünkü İlerleme
-            </div>
-
-            <div className="text-2xl font-black text-teal-300 mt-1">
-              %{progressPercentage}
-            </div>
-
-          </div>
-
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-
-            <div className="text-xs text-slate-400 font-semibold">
-              Tamamlanan Gün
-            </div>
-
-            <div className="text-2xl font-black text-purple-300 mt-1">
-              {totalCompletedDays}
-            </div>
-
-          </div>
-
         </div>
 
         {/* GÜN TAMAMLANDI */}
-
         {allGoalsCompleted && (
-
           <div className="rounded-3xl border border-emerald-400/30 bg-emerald-500/10 p-6 shadow-lg">
-
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-
-              <div className="text-4xl">
-                🏆
-              </div>
-
+              <div className="text-4xl">🏆</div>
               <div>
-
                 <h2 className="text-xl font-extrabold text-white">
                   {getDailyCompletionTitle()}
                 </h2>
-
                 <p className="text-sm text-emerald-200/80 mt-1">
-                  Bugünkü bütün hedeflerini
-                  tamamladın.
-                  Nexora seninle gurur
-                  duyuyor! 🔥
+                  Bugünkü bütün hedeflerini tamamladın. Harika ilerliyorsun! 🔥
                 </p>
-
               </div>
-
             </div>
-
           </div>
-
         )}
 
-        {/* İLERLEME */}
-
-        <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6">
-
-          <div className="flex justify-between items-center mb-3">
-
-            <div>
-
-              <h2 className="font-extrabold text-white">
-                Bugünkü İlerleme
-              </h2>
-
-              <p className="text-xs text-slate-400 mt-1">
-                Hedeflerinin ne kadarını
-                tamamladın?
-              </p>
-
-            </div>
-
-            <span className="text-lg font-black text-teal-300">
-              %{progressPercentage}
-            </span>
-
-          </div>
-
-          <div className="w-full h-4 rounded-full bg-slate-800 overflow-hidden">
-
-            <div
-              className="h-full bg-gradient-to-r from-teal-400 via-blue-500 to-purple-500 transition-all duration-500"
-              style={{
-                width:
-                  `${progressPercentage}%`,
-              }}
-            />
-
-          </div>
-
-        </div>
-
         {/* YENİ HEDEF */}
-
         <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6">
-
           <h2 className="font-extrabold text-white mb-4">
             ➕ Yeni Hedef Ekle
           </h2>
-
           <form
             onSubmit={addGoal}
             className="flex flex-col sm:flex-row gap-3"
           >
-
             <input
               type="text"
               value={newGoalText}
               onChange={(event) =>
-                setNewGoalText(
-                  event.target.value
-                )
+                setNewGoalText(event.target.value)
               }
-              placeholder="Örn: 30 matematik sorusu çöz"
-              disabled={
-                isSaving ||
-                deletingGoalId !== null
-              }
+              placeholder="Örn: 30 dakika C# çalışması yap"
+              disabled={isSaving || deletingGoalId !== null}
               className="flex-1 px-4 py-3 rounded-2xl bg-slate-950/70 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-teal-400 disabled:opacity-50"
             />
-
             <button
               type="submit"
               disabled={
@@ -1126,276 +714,86 @@ export default function Goals() {
                 isSaving ||
                 deletingGoalId !== null
               }
-              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-teal-500 to-blue-600 text-white font-extrabold hover:scale-[1.02] transition disabled:opacity-50 disabled:hover:scale-100"
+              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-teal-500 to-blue-600 text-white font-extrabold hover:scale-[1.02] transition disabled:opacity-50"
             >
-              {isSaving
-                ? 'Kaydediliyor...'
-                : 'Hedef Ekle'}
+              {isSaving ? 'Kaydediliyor...' : 'Hedef Ekle'}
             </button>
-
           </form>
-
         </div>
 
-        {/* =================================================
-            BUGÜNÜN HEDEFLERİ
-        ================================================== */}
-
+        {/* BUGÜNÜN HEDEFLERİ */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6">
-
           <div className="flex items-center justify-between mb-5">
-
             <div>
-
               <h2 className="font-extrabold text-white text-xl">
                 📋 Bugünün Hedefleri
               </h2>
-
-              <p className="text-xs text-slate-400 mt-1">
-                Tamamlamak için tikle.
-              </p>
-
+              <p className="text-xs text-slate-400 mt-1">Tamamlamak için tikle.</p>
             </div>
-
             <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300">
               {completedCount}/{totalToday}
             </span>
-
           </div>
 
           {todaysGoals.length === 0 ? (
-
             <div className="text-center py-12 border border-dashed border-slate-700 rounded-2xl">
-
-              <div className="text-4xl mb-3">
-                🎯
-              </div>
-
-              <h3 className="text-white font-bold">
-                Henüz bugünün hedefi yok.
-              </h3>
-
-              <p className="text-xs text-slate-500 mt-1">
-                Yukarıdan ilk hedefini ekle.
-              </p>
-
+              <div className="text-4xl mb-3">🎯</div>
+              <h3 className="text-white font-bold">Henüz bugünün hedefi yok.</h3>
+              <p className="text-xs text-slate-500 mt-1">Yukarıdan ilk hedefini ekle.</p>
             </div>
-
           ) : (
-
             <div className="space-y-4">
-
-              {todaysGoals.map(
-                (goal) => (
-
-                  /*
-                   * =================================================
-                   * TEK HEDEF KARTI
-                   *
-                   * Burada SADECE:
-                   *
-                   * 1. ÜSTTE checkbox
-                   * 2. ALTTA çöp kutusu butonu
-                   *
-                   * var.
-                   *
-                   * Sağ tarafta artık checkbox benzeri
-                   * hiçbir ekstra alan YOK.
-                   * =================================================
-                   */
-
-                  <div
-                    key={goal.id}
-                    className={`rounded-2xl border overflow-hidden transition-all ${
-                      goal.completed
-                        ? 'bg-emerald-500/10 border-emerald-400/20'
-                        : 'bg-slate-950/50 border-slate-800 hover:border-teal-500/40'
-                    }`}
-                  >
-
-                    {/* HEDEF SATIRI */}
-
-                    <div className="flex items-center gap-4 p-5">
-
-                      {/* TEK CHECKBOX */}
-
-                      <input
-                        type="checkbox"
-                        checked={
-                          goal.completed
-                        }
-                        disabled={
-                          isSaving ||
-                          deletingGoalId !== null
-                        }
-                        onChange={() =>
-                          toggleGoal(
-                            goal.id
-                          )
-                        }
-                        className="w-6 h-6 shrink-0 accent-teal-500 cursor-pointer disabled:opacity-50"
-                        aria-label={
-                          `${goal.text} tamamlandı`
-                        }
-                      />
-
-                      {/* HEDEF METNİ */}
-
-                      <div className="flex-1 min-w-0">
-
-                        <div
-                          className={`text-sm font-semibold break-words ${
-                            goal.completed
-                              ? 'text-slate-500 line-through'
-                              : 'text-white'
-                          }`}
-                        >
-                          {goal.text}
-                        </div>
-
-                        {goal.completed && (
-
-                          <div className="text-[10px] text-emerald-400 font-bold mt-1">
-                            ✓ Tamamlandı
-                          </div>
-
-                        )}
-
-                      </div>
-
-                    </div>
-
-                    {/* =================================================
-                        SİLME BUTONU
-                        ================================================= */}
-
-                    <div className="px-5 pb-5">
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          deleteGoal(
-                            goal.id
-                          )
-                        }
-                        disabled={
-                          isSaving ||
-                          deletingGoalId !== null
-                        }
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 text-sm font-bold hover:bg-red-500/20 hover:border-red-400/50 hover:text-red-200 transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label={
-                          `Hedefi sil: ${goal.text}`
-                        }
-                      >
-
-                        <span className="text-lg">
-                          🗑️
-                        </span>
-
-                        <span>
-                          {deletingGoalId ===
-                          goal.id
-                            ? 'Hedef Siliniyor...'
-                            : 'Hedefi Sil'}
-                        </span>
-
-                      </button>
-
-                    </div>
-
-                  </div>
-
-                )
-              )}
-
-            </div>
-
-          )}
-
-        </div>
-
-        {/* GEÇMİŞ */}
-
-        <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6">
-
-          <h2 className="font-extrabold text-white text-xl mb-5">
-            📅 Günlük Başarı Geçmişi
-          </h2>
-
-          {Object.keys(
-            goalHistory
-          ).length === 0 ? (
-
-            <p className="text-sm text-slate-500">
-              Henüz tamamlanan bir gün yok.
-            </p>
-
-          ) : (
-
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-
-              {Object.entries(
-                goalHistory
-              )
-                .sort(
-                  (a, b) =>
-                    b[0].localeCompare(
-                      a[0]
-                    )
-                )
-                .slice(0, 12)
-                .map(
-                  ([date, day]) => (
-
-                    <div
-                      key={date}
-                      className={`rounded-2xl p-4 border ${
-                        day.completed
-                          ? 'bg-emerald-500/10 border-emerald-400/20'
-                          : 'bg-red-500/5 border-red-400/10'
-                      }`}
-                    >
-
-                      <div className="text-[10px] text-slate-500 font-bold">
-                        {date}
-                      </div>
-
-                      <div className="text-xl mt-2">
-                        {day.completed
-                          ? '🏆'
-                          : '○'}
-                      </div>
-
-                      <div className="text-xs text-slate-300 font-bold mt-1">
-                        {day.completedCount}/
-                        {day.totalCount}
-                      </div>
-
+              {todaysGoals.map((goal) => (
+                <div
+                  key={goal.id}
+                  className={`rounded-2xl border overflow-hidden transition-all ${
+                    goal.completed
+                      ? 'bg-emerald-500/10 border-emerald-400/20'
+                      : 'bg-slate-950/50 border-slate-800 hover:border-teal-500/40'
+                  }`}
+                >
+                  <div className="flex items-center gap-4 p-5">
+                    <input
+                      type="checkbox"
+                      checked={goal.completed}
+                      disabled={isSaving || deletingGoalId !== null}
+                      onChange={() => toggleGoal(goal.id)}
+                      className="w-6 h-6 shrink-0 accent-teal-500 cursor-pointer disabled:opacity-50"
+                    />
+                    <div className="flex-1 min-w-0">
                       <div
-                        className={`text-[10px] font-bold mt-1 ${
-                          day.completed
-                            ? 'text-emerald-400'
-                            : 'text-slate-500'
+                        className={`text-sm font-semibold break-words ${
+                          goal.completed ? 'text-slate-500 line-through' : 'text-white'
                         }`}
                       >
-                        {day.completed
-                          ? 'Tamamlandı'
-                          : 'Eksik'}
+                        {goal.text}
                       </div>
-
+                      {goal.completed && (
+                        <div className="text-[10px] text-emerald-400 font-bold mt-1">
+                          ✓ Tamamlandı
+                        </div>
+                      )}
                     </div>
+                  </div>
 
-                  )
-                )}
-
+                  <div className="px-5 pb-5">
+                    <button
+                      type="button"
+                      onClick={() => deleteGoal(goal.id)}
+                      disabled={isSaving || deletingGoalId !== null}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 text-sm font-bold hover:bg-red-500/20 transition-all"
+                    >
+                      <span>🗑️</span>
+                      <span>{deletingGoalId === goal.id ? 'Siliniyor...' : 'Hedefi Sil'}</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-
           )}
-
         </div>
 
       </div>
-
     </div>
   );
 }
