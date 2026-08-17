@@ -11,7 +11,7 @@ import {
   collection,
   deleteDoc,
   doc,
-  getDocs,
+  onSnapshot,
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
@@ -94,110 +94,120 @@ export default function QuestionBook() {
   ];
 
   // ------------------------------------------------------------
-  // FIREBASE'DEN SORULARI YÜKLE
+  // FIREBASE'DEN SORULARI ANLIK (ONSNAPSHOT) YÜKLE
   //
   // users/{uid}/questions/{questionId}
   // ------------------------------------------------------------
 
   useEffect(() => {
-    const unsubscribe =
-      onAuthStateChanged(
-        auth,
-        async (firebaseUser) => {
-          setUser(firebaseUser);
+    let unsubscribeSnapshot: (() => void) | undefined;
 
-          if (!firebaseUser) {
-            setQuestions([]);
-            setLoading(false);
-            return;
-          }
+    const unsubscribeAuth = onAuthStateChanged(
+      auth,
+      async (firebaseUser) => {
+        setUser(firebaseUser);
 
-          try {
-            setLoading(true);
-            setError('');
+        if (unsubscribeSnapshot) {
+          unsubscribeSnapshot();
+        }
 
-            const questionsRef =
-              collection(
-                db,
-                'users',
-                firebaseUser.uid,
-                'questions'
+        if (!firebaseUser) {
+          setQuestions([]);
+          setLoading(false);
+          return;
+        }
+
+        try {
+          setLoading(true);
+          setError('');
+
+          const questionsRef =
+            collection(
+              db,
+              'users',
+              firebaseUser.uid,
+              'questions'
+            );
+
+          unsubscribeSnapshot = onSnapshot(
+            questionsRef,
+            (snapshot) => {
+              const loadedQuestions: Question[] =
+                snapshot.docs.map((questionDoc) => {
+                  const data =
+                    questionDoc.data();
+
+                  return {
+                    id: questionDoc.id,
+                    lesson:
+                      typeof data.lesson === 'string'
+                        ? data.lesson
+                        : 'Matematik',
+                    topic:
+                      typeof data.topic === 'string'
+                        ? data.topic
+                        : '',
+                    type:
+                      data.type === 'image'
+                        ? 'image'
+                        : 'text',
+                    content:
+                      typeof data.content === 'string'
+                        ? data.content
+                        : '',
+                    reason:
+                      typeof data.reason === 'string'
+                        ? data.reason
+                        : 'Diğer',
+                    status:
+                      data.status === 'resolved'
+                        ? 'resolved'
+                        : 'unresolved',
+                    date:
+                      typeof data.date === 'string'
+                        ? data.date
+                        : '',
+                  };
+                });
+
+              loadedQuestions.sort(
+                (a, b) =>
+                  Number(b.id) - Number(a.id)
               );
 
-            const snapshot =
-              await getDocs(questionsRef);
-
-            const loadedQuestions: Question[] =
-              snapshot.docs.map((questionDoc) => {
-                const data =
-                  questionDoc.data();
-
-                return {
-                  id: questionDoc.id,
-
-                  lesson:
-                    typeof data.lesson === 'string'
-                      ? data.lesson
-                      : 'Matematik',
-
-                  topic:
-                    typeof data.topic === 'string'
-                      ? data.topic
-                      : '',
-
-                  type:
-                    data.type === 'image'
-                      ? 'image'
-                      : 'text',
-
-                  content:
-                    typeof data.content === 'string'
-                      ? data.content
-                      : '',
-
-                  reason:
-                    typeof data.reason === 'string'
-                      ? data.reason
-                      : 'Diğer',
-
-                  status:
-                    data.status === 'resolved'
-                      ? 'resolved'
-                      : 'unresolved',
-
-                  date:
-                    typeof data.date === 'string'
-                      ? data.date
-                      : '',
-                };
-              });
-
-            // Yeni sorular üstte görünsün.
-            loadedQuestions.sort(
-              (a, b) =>
-                Number(b.id) -
-                Number(a.id)
-            );
-
-            setQuestions(
-              loadedQuestions
-            );
-          } catch (firebaseError) {
-            console.error(
-              'Sorular Firebase üzerinden yüklenemedi:',
-              firebaseError
-            );
-
-            setError(
-              'Sorular Firebase üzerinden yüklenemedi.'
-            );
-          } finally {
-            setLoading(false);
-          }
+              setQuestions(loadedQuestions);
+              setLoading(false);
+            },
+            (firebaseError) => {
+              console.error(
+                'Sorular dinlenirken hata oluştu:',
+                firebaseError
+              );
+              setError(
+                'Sorular Firebase üzerinden yüklenemedi.'
+              );
+              setLoading(false);
+            }
+          );
+        } catch (firebaseError) {
+          console.error(
+            'Bağlantı kurulamadı:',
+            firebaseError
+          );
+          setError(
+            'Sorular yüklenirken bir hata oluştu.'
+          );
+          setLoading(false);
         }
-      );
+      }
+    );
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+      }
+    };
   }, []);
 
   // ------------------------------------------------------------
@@ -230,29 +240,17 @@ export default function QuestionBook() {
       setSaving(true);
       setError('');
 
-      /*
-       * Firestore belge ID'sini kendimiz oluşturuyoruz.
-       * Böylece sorunun id'si arayüzde de aynı kalıyor.
-       */
-
       const questionId =
         Date.now().toString();
 
       const newQuestion: Question = {
         id: questionId,
-
         lesson,
-
         topic: topic.trim(),
-
         type: questionType,
-
         content: questionContent,
-
         reason,
-
         status: 'unresolved',
-
         date:
           new Date().toLocaleDateString(
             'tr-TR'
@@ -271,38 +269,14 @@ export default function QuestionBook() {
       await setDoc(
         questionRef,
         {
-          lesson:
-            newQuestion.lesson,
-
-          topic:
-            newQuestion.topic,
-
-          type:
-            newQuestion.type,
-
-          content:
-            newQuestion.content,
-
-          reason:
-            newQuestion.reason,
-
-          status:
-            newQuestion.status,
-
-          date:
-            newQuestion.date,
+          lesson: newQuestion.lesson,
+          topic: newQuestion.topic,
+          type: newQuestion.type,
+          content: newQuestion.content,
+          reason: newQuestion.reason,
+          status: newQuestion.status,
+          date: newQuestion.date,
         }
-      );
-
-      /*
-       * Firebase başarılıysa ekranda da göster.
-       */
-
-      setQuestions(
-        (currentQuestions) => [
-          newQuestion,
-          ...currentQuestions,
-        ]
       );
 
       setTopic('');
@@ -366,19 +340,6 @@ export default function QuestionBook() {
           status: newStatus,
         }
       );
-
-      setQuestions(
-        (currentQuestions) =>
-          currentQuestions.map(
-            (item) =>
-              item.id === id
-                ? {
-                    ...item,
-                    status: newStatus,
-                  }
-                : item
-          )
-      );
     } catch (firebaseError) {
       console.error(
         'Soru durumu güncellenemedi:',
@@ -420,14 +381,6 @@ export default function QuestionBook() {
       await deleteDoc(
         questionRef
       );
-
-      setQuestions(
-        (currentQuestions) =>
-          currentQuestions.filter(
-            (question) =>
-              question.id !== id
-          )
-      );
     } catch (firebaseError) {
       console.error(
         'Soru silinemedi:',
@@ -444,8 +397,6 @@ export default function QuestionBook() {
 
   // ------------------------------------------------------------
   // FOTOĞRAF YÜKLEME
-  //
-  // Şimdilik mevcut sistem korunuyor.
   // ------------------------------------------------------------
 
   const handleImageUpload = (

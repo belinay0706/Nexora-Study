@@ -264,14 +264,12 @@ export default function Goals() {
         {
           goals: updatedGoals,
           goalHistory: updatedHistory,
-          currentStreak:
-            updatedCurrentStreak,
-          bestStreak:
-            updatedBestStreak,
-          totalCompletedDays:
-            updatedTotalCompletedDays,
-          updatedAt:
-            serverTimestamp(),
+          currentStreak: updatedCurrentStreak,
+          bestStreak: updatedBestStreak,
+          totalCompletedDays: updatedTotalCompletedDays,
+          // 🏆 Rozet sisteminin anlık okuyabilmesi için ek alanlar:
+          completedGoalsCount: updatedTotalCompletedDays, 
+          updatedAt: serverTimestamp(),
         },
         {
           merge: true,
