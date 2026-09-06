@@ -7,15 +7,16 @@
   }
 }
 
-/* 1. Nexora Özel Gradyan */
-.nexora-gradient {
+/* 1. Belora Özel Gradyan */
+.belora-gradient {
   background: linear-gradient(135deg, #0d9488 0%, #0d9488 33%, #2563eb 66%, #9333ea 100%);
 }
 
-.nexora-text-gradient {
+.belora-text-gradient {
   background: linear-gradient(135deg, #0d9488 0%, #2563eb 50%, #9333ea 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: #2563eb; /* Şeffaflık desteklenmeyen durumlar için yedek net renk */
 }
 
 /* 2. Standart Koyu Tema (Obsidian / Dark) */

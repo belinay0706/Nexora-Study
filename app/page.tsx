@@ -36,6 +36,7 @@ import Badges from './components/Badges';
 import Goal from './components/Goal';
 import CalendarView from './components/CalendarView';
 import QuestionBook from './components/QuestionBook';
+import Explore from './components/Explore';
 
 type AppUserProfile = {
   uid: string;
@@ -53,7 +54,7 @@ export default function Page() {
 
   const [isLogin, setIsLogin] = useState(true);
   const [activeTab, setActiveTab] = useState('anasayfa');
-  const [currentTheme, setCurrentTheme] = useState('nexora-gradient');
+  const [currentTheme, setCurrentTheme] = useState('belora-gradient');
 
   // MOBİL MENÜ İÇİN STATE
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -117,7 +118,7 @@ export default function Page() {
 
               if (!profile.selectedLevel) {
                 const localLevel = localStorage.getItem(
-                  `nexora_selected_level_${firebaseUser.uid}`
+                  `belora_selected_level_${firebaseUser.uid}`
                 );
 
                 if (localLevel) {
@@ -132,7 +133,7 @@ export default function Page() {
                   email: firebaseUser.email,
                   displayName: fallbackName,
                   selectedLevel: null,
-                  theme: 'nexora-gradient',
+                  theme: 'belora-gradient',
                   createdAt: serverTimestamp(),
                   updatedAt: serverTimestamp(),
                 },
@@ -171,11 +172,7 @@ export default function Page() {
   // FIRESTORE KULLANICI PROFİLİ KAYDETME
   // ---------------------------------------------------------
   const saveUserProfile = async (
-    updates: Partial<{
-      selectedLevel: string | null;
-      theme: string;
-      displayName: string;
-    }>
+    updates: Partial<AppUserProfile>
   ) => {
     if (!user) return;
 
@@ -207,7 +204,7 @@ export default function Page() {
     if (!user) return;
 
     localStorage.setItem(
-      `nexora_selected_level_${user.uid}`,
+      `belora_selected_level_${user.uid}`,
       level
     );
 
@@ -223,7 +220,7 @@ export default function Page() {
     if (!user?.uid) return;
 
     localStorage.setItem(
-      `nexora_theme_${user.uid}`,
+      `belora_theme_${user.uid}`,
       currentTheme
     );
 
@@ -297,7 +294,7 @@ export default function Page() {
             setSelectedLevel(profile.selectedLevel);
 
             localStorage.setItem(
-              `nexora_selected_level_${firebaseUser.uid}`,
+              `belora_selected_level_${firebaseUser.uid}`,
               profile.selectedLevel
             );
           }
@@ -306,7 +303,7 @@ export default function Page() {
             setCurrentTheme(profile.theme);
 
             localStorage.setItem(
-              `nexora_theme_${firebaseUser.uid}`,
+              `belora_theme_${firebaseUser.uid}`,
               profile.theme
             );
           }
@@ -353,7 +350,7 @@ export default function Page() {
             email: firebaseUser.email,
             displayName: cleanName,
             selectedLevel: null,
-            theme: 'nexora-gradient',
+            theme: 'belora-gradient',
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
           },
@@ -469,7 +466,7 @@ export default function Page() {
           );
 
           localStorage.setItem(
-            `nexora_selected_level_${firebaseUser.uid}`,
+            `belora_selected_level_${firebaseUser.uid}`,
             profile.selectedLevel
           );
         }
@@ -480,7 +477,7 @@ export default function Page() {
           );
 
           localStorage.setItem(
-            `nexora_theme_${firebaseUser.uid}`,
+            `belora_theme_${firebaseUser.uid}`,
             profile.theme
           );
         }
@@ -498,7 +495,7 @@ export default function Page() {
             email: firebaseUser.email,
             displayName,
             selectedLevel: null,
-            theme: 'nexora-gradient',
+            theme: 'belora-gradient',
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
           },
@@ -593,7 +590,7 @@ export default function Page() {
           <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-white/20 border-t-white animate-spin" />
 
           <p className="text-sm font-semibold">
-            Nexora Study hazırlanıyor...
+            Belora Study hazırlanıyor...
           </p>
         </div>
       </main>
@@ -612,14 +609,14 @@ export default function Page() {
 
           <div className="text-center mb-8">
             <h1 className="text-4xl font-extrabold tracking-tight mb-2">
-              Nexora{' '}
+              Belora{' '}
               <span className="text-teal-200">
                 Study
               </span>
             </h1>
 
             <p className="text-sm text-white/80 italic font-medium">
-              "Hedefine Giden En Akıllı Yol."
+              Hedefine Giden En Akıllı Yol.
             </p>
           </div>
 
@@ -793,7 +790,7 @@ export default function Page() {
           />
 
           <main
-            className={`flex-1 md:ml-64 min-h-screen ${currentTheme} transition-all duration-500 overflow-y-auto`}
+            className={`flex-1 md:ml-64 min-h-screen ${currentTheme} transition-all duration-500 overflow-y-auto pb-12`}
           >
 
             {activeTab !== 'anasayfa' && (
@@ -816,54 +813,105 @@ export default function Page() {
               </div>
             )}
 
-            {activeTab === 'anasayfa' && (
-              <Dashboard
-                selectedLevel={selectedLevel}
-              />
-            )}
+            {/* SEKMELER ARASI ANLIK GEÇİŞ */}
+            <div className={activeTab === 'anasayfa' ? 'block' : 'hidden'}>
+              <Dashboard selectedLevel={selectedLevel} />
+            </div>
 
-            {activeTab === 'aikoç' && (
+            <div className={activeTab === 'aikoç' ? 'block' : 'hidden'}>
               <AiCoach />
-            )}
+            </div>
 
-            {activeTab === 'programım' && (
+            <div className={activeTab === 'programım' ? 'block' : 'hidden'}>
               <Program />
-            )}
+            </div>
 
-            {activeTab === 'dijital ajanda' && (
+            <div className={activeTab === 'dijital ajanda' ? 'block' : 'hidden'}>
               <Agenda />
-            )}
+            </div>
 
-            {activeTab === 'yapamadığım sorular' && (
+            <div className={activeTab === 'yapamadığım sorular' ? 'block' : 'hidden'}>
               <QuestionBook />
-            )}
+            </div>
 
-            {activeTab === 'hızlı notlar' && (
+            <div className={activeTab === 'hızlı notlar' ? 'block' : 'hidden'}>
               <QuickNotes />
-            )}
+            </div>
 
-            {activeTab === 'takvim' && (
+            <div className={activeTab === 'takvim' ? 'block' : 'hidden'}>
               <CalendarView />
-            )}
+            </div>
 
-            {activeTab === 'pomodoro' && (
+            <div className={activeTab === 'pomodoro' ? 'block' : 'hidden'}>
               <Pomodoro />
-            )}
+            </div>
 
-            {activeTab === 'hedefler' && (
+            <div className={activeTab === 'hedefler' ? 'block' : 'hidden'}>
               <Goal />
-            )}
+            </div>
 
-            {activeTab === 'rozetler' && (
+            <div className={activeTab === 'rozetler' ? 'block' : 'hidden'}>
               <Badges />
-            )}
+            </div>
 
-            {activeTab === 'ayarlar' && (
+            <div className={activeTab === 'keşfet' ? 'block' : 'hidden'}>
+              <Explore />
+            </div>
+
+            <div className={activeTab === 'ayarlar' ? 'block' : 'hidden'}>
               <Settings
                 currentTheme={currentTheme}
                 setTheme={setCurrentTheme}
               />
-            )}
+            </div>
+
+            {/* HAKKINDA & İLETİŞİM ALANI (AdSense Onay Kartı) */}
+            <section className="max-w-5xl mx-auto mt-12 px-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Hakkında Kartı */}
+                <div className="bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-amber-200/60 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-800 flex items-center gap-2 mb-2">
+                      <span>📖</span> Belora Study Hakkında
+                    </h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Belora Study; öğrencilerin ve verimli çalışmak isteyen herkesin odaklanma sürelerini düzenlemelerine, günlük hedeflerini planlamalarına ve zamanlarını daha iyi yönetmelerine yardımcı olmak için tasarlandı. Sadelik ve kullanışlılığı ön planda tutarak ders çalışma süreçlerini daha keyifli hale getirmeyi amaçlar.
+                    </p>
+                  </div>
+                </div>
+
+                {/* İletişim Kartı */}
+                <div className="bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-amber-200/60 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-800 flex items-center gap-2 mb-2">
+                      <span>💬</span> İletişim & Geri Bildirim
+                    </h3>
+                    <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                      Platformla ilgili her türlü öneri, soru veya karşılaştığınız bir problem için bizimle dilediğiniz zaman iletişime geçebilirsiniz. Görüşleriniz Belora Study'yi geliştirmemiz için çok değerli.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-amber-100">
+                    <a 
+                      href="mailto:belorastudy@gmail.com" 
+                      className="text-xs font-semibold text-amber-900 bg-amber-100/80 px-3 py-1.5 rounded-xl hover:bg-amber-200 transition-colors flex items-center gap-1.5"
+                    >
+                      📧 belorastudy@gmail.com
+                    </a>
+                    <a 
+                      href="https://instagram.com/belorastudy" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs font-semibold text-pink-700 bg-pink-100/80 px-3 py-1.5 rounded-xl hover:bg-pink-200 transition-colors flex items-center gap-1.5"
+                    >
+                      📸 @belorastudy
+                    </a>
+                  </div>
+                </div>
+
+              </div>
+            </section>
 
           </main>
         </div>

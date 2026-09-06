@@ -39,7 +39,6 @@ interface GoalHistory {
   [date: string]: GoalHistoryDay;
 }
 
-// 🏆 Rozet Tanımları
 interface Badge {
   id: string;
   title: string;
@@ -59,15 +58,12 @@ const getLocalDateKey = (date = new Date()) => {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
   const day = `${date.getDate()}`.padStart(2, '0');
-
   return `${year}-${month}-${day}`;
 };
 
 const getPreviousDateKey = (dateKey: string) => {
   const date = new Date(`${dateKey}T12:00:00`);
-
   date.setDate(date.getDate() - 1);
-
   return getLocalDateKey(date);
 };
 
@@ -89,87 +85,48 @@ const calculateStreak = (
 };
 
 export default function Goals() {
-  const [user, setUser] =
-    useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [authLoading, setAuthLoading] =
-    useState(true);
-
-  const [isLoading, setIsLoading] =
-    useState(true);
-
-  const [goals, setGoals] =
-    useState<Goal[]>([]);
-
-  const [goalHistory, setGoalHistory] =
-    useState<GoalHistory>({});
-
-  const [currentStreak, setCurrentStreak] =
-    useState(0);
-
-  const [bestStreak, setBestStreak] =
-    useState(0);
-
-  const [totalCompletedDays, setTotalCompletedDays] =
-    useState(0);
-
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [goalHistory, setGoalHistory] = useState<GoalHistory>({});
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [totalCompletedDays, setTotalCompletedDays] = useState(0);
   const [badges, setBadges] = useState<Badge[]>([]);
 
-  const [newGoalText, setNewGoalText] =
-    useState('');
+  const [newGoalText, setNewGoalText] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
-  const [isSaving, setIsSaving] =
-    useState(false);
+  const todayKey = useMemo(() => getLocalDateKey(), []);
 
-  const [saveError, setSaveError] =
-    useState('');
-
-  const [saveSuccess, setSaveSuccess] =
-    useState(false);
-
-  const [deletingGoalId, setDeletingGoalId] =
-    useState<string | null>(null);
-
-  const todayKey = useMemo(
-    () => getLocalDateKey(),
-    []
-  );
-
-  /*
-   * AUTH
-   */
   useEffect(() => {
-    const unsubscribe =
-      onAuthStateChanged(
-        auth,
-        async (firebaseUser) => {
-          setUser(firebaseUser);
-          setAuthLoading(false);
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async (firebaseUser) => {
+        setUser(firebaseUser);
+        setAuthLoading(false);
 
+        if (!firebaseUser) {
           setGoals([]);
           setGoalHistory({});
           setCurrentStreak(0);
           setBestStreak(0);
           setTotalCompletedDays(0);
           setBadges([]);
-          setSaveError('');
-          setSaveSuccess(false);
-
-          if (!firebaseUser) {
-            setIsLoading(false);
-            return;
-          }
-
-          await loadGoalData(firebaseUser);
+          setIsLoading(false);
+          return;
         }
-      );
+
+        await loadGoalData(firebaseUser);
+      }
+    );
 
     return () => unsubscribe();
   }, []);
 
-  /*
-   * ROZETLERİ HESAPLA / KONTROL ET
-   */
   const checkAndUnlockBadges = (
     currentTotalDays: number,
     streak: number,
@@ -196,24 +153,13 @@ export default function Goals() {
     });
   };
 
-  /*
-   * FIREBASE'DEN VERİLERİ YÜKLE
-   */
-  const loadGoalData = async (
-    firebaseUser: User
-  ) => {
+  const loadGoalData = async (firebaseUser: User) => {
     setIsLoading(true);
     setSaveError('');
 
     try {
-      const profileRef = doc(
-        db,
-        'users',
-        firebaseUser.uid
-      );
-
-      const profileSnap =
-        await getDoc(profileRef);
+      const profileRef = doc(db, 'users', firebaseUser.uid);
+      const profileSnap = await getDoc(profileRef);
 
       if (!profileSnap.exists()) {
         setGoals([]);
@@ -227,31 +173,23 @@ export default function Goals() {
 
       const data = profileSnap.data();
 
-      const storedGoals =
-        Array.isArray(data.goals)
-          ? (data.goals as Goal[])
-          : [];
+      const storedGoals = Array.isArray(data.goals)
+        ? (data.goals as Goal[])
+        : [];
 
       const storedHistory =
-        data.goalHistory &&
-        typeof data.goalHistory === 'object'
+        data.goalHistory && typeof data.goalHistory === 'object'
           ? (data.goalHistory as GoalHistory)
           : {};
 
       const storedCurrentStreak =
-        typeof data.currentStreak === 'number'
-          ? data.currentStreak
-          : 0;
+        typeof data.currentStreak === 'number' ? data.currentStreak : 0;
 
       const storedBestStreak =
-        typeof data.bestStreak === 'number'
-          ? data.bestStreak
-          : 0;
+        typeof data.bestStreak === 'number' ? data.bestStreak : 0;
 
       const storedTotalCompletedDays =
-        typeof data.totalCompletedDays === 'number'
-          ? data.totalCompletedDays
-          : 0;
+        typeof data.totalCompletedDays === 'number' ? data.totalCompletedDays : 0;
 
       const storedBadges = Array.isArray(data.badges)
         ? (data.badges as Badge[])
@@ -264,22 +202,13 @@ export default function Goals() {
       setTotalCompletedDays(storedTotalCompletedDays);
       setBadges(checkAndUnlockBadges(storedTotalCompletedDays, storedCurrentStreak, storedBadges));
     } catch (error) {
-      console.error(
-        'Hedefler yüklenemedi:',
-        error
-      );
-
-      setSaveError(
-        'Hedefler yüklenemedi. Firebase bağlantısını kontrol et.'
-      );
+      console.error('Hedefler yüklenemedi:', error);
+      setSaveError('Hedefler yüklenemedi.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  /*
-   * FIREBASE'E KAYDET
-   */
   const saveGoalData = async (
     updatedGoals: Goal[],
     updatedHistory: GoalHistory,
@@ -288,20 +217,10 @@ export default function Goals() {
     updatedTotalCompletedDays: number,
     updatedBadges: Badge[]
   ) => {
-    if (!user) {
-      return false;
-    }
-
-    setIsSaving(true);
-    setSaveError('');
-    setSaveSuccess(false);
+    if (!user) return;
 
     try {
-      const profileRef = doc(
-        db,
-        'users',
-        user.uid
-      );
+      const profileRef = doc(db, 'users', user.uid);
 
       await setDoc(
         profileRef,
@@ -315,105 +234,42 @@ export default function Goals() {
           badges: updatedBadges,
           updatedAt: serverTimestamp(),
         },
-        {
-          merge: true,
-        }
+        { merge: true }
       );
-
-      setSaveSuccess(true);
-
-      window.setTimeout(() => {
-        setSaveSuccess(false);
-      }, 2000);
-
-      return true;
     } catch (error) {
-      console.error(
-        'Hedefler kaydedilemedi:',
-        error
-      );
-
-      setSaveError(
-        'Kaydedilemedi. Firebase bağlantısını ve Firestore kurallarını kontrol et.'
-      );
-
-      return false;
-    } finally {
-      setIsSaving(false);
+      console.error('Hedefler kaydedilemedi:', error);
+      setSaveError('Değişiklikler kaydedilemedi.');
     }
   };
 
-  /*
-   * BUGÜNÜN HEDEFLERİ
-   */
   const todaysGoals = useMemo(() => {
-    return goals.filter(
-      (goal) =>
-        goal.date === todayKey
-    );
+    return goals.filter((goal) => goal.date === todayKey);
   }, [goals, todayKey]);
 
-  /*
-   * TAMAMLANAN HEDEFLER
-   */
   const completedCount = useMemo(() => {
-    return todaysGoals.filter(
-      (goal) => goal.completed
-    ).length;
+    return todaysGoals.filter((goal) => goal.completed).length;
   }, [todaysGoals]);
 
-  const totalToday =
-    todaysGoals.length;
-
-  /*
-   * İLERLEME
-   */
-  const progressPercentage =
-    totalToday > 0
-      ? Math.round(
-          (completedCount /
-            totalToday) *
-            100
-        )
-      : 0;
+  const totalToday = todaysGoals.length;
 
   const allGoalsCompleted =
-    totalToday > 0 &&
-    completedCount === totalToday;
+    totalToday > 0 && completedCount === totalToday;
 
-  /*
-   * BUGÜNÜN HISTORY'SİNİ OLUŞTUR
-   */
   const buildTodayHistory = (
     updatedGoals: Goal[],
     existingHistory: GoalHistory
   ) => {
-    const updatedHistory = {
-      ...existingHistory,
-    };
-
-    const todayGoals =
-      updatedGoals.filter(
-        (goal) =>
-          goal.date === todayKey
-      );
+    const updatedHistory = { ...existingHistory };
+    const todayGoals = updatedGoals.filter((goal) => goal.date === todayKey);
 
     if (todayGoals.length === 0) {
       delete updatedHistory[todayKey];
       return updatedHistory;
     }
 
-    const completedToday =
-      todayGoals.filter(
-        (goal) => goal.completed
-      ).length;
-
-    const totalTodayGoals =
-      todayGoals.length;
-
-    const dayCompleted =
-      completedToday ===
-      totalTodayGoals;
+    const completedToday = todayGoals.filter((goal) => goal.completed).length;
+    const totalTodayGoals = todayGoals.length;
+    const dayCompleted = completedToday === totalTodayGoals;
 
     updatedHistory[todayKey] = {
       completed: dayCompleted,
@@ -424,9 +280,6 @@ export default function Goals() {
     return updatedHistory;
   };
 
-  /*
-   * ORTAK STATE GÜNCELLEME VE KAYIT YARDIMCISI
-   */
   const processAndUpdate = async (
     updatedGoals: Goal[],
     updatedHistory: GoalHistory
@@ -443,13 +296,6 @@ export default function Goals() {
       badges
     );
 
-    const previousGoals = [...goals];
-    const previousHistory = { ...goalHistory };
-    const previousStreak = currentStreak;
-    const previousBest = bestStreak;
-    const previousTotalDays = totalCompletedDays;
-    const previousBadges = [...badges];
-
     setGoals(updatedGoals);
     setGoalHistory(updatedHistory);
     setCurrentStreak(calculatedStreak);
@@ -457,7 +303,7 @@ export default function Goals() {
     setTotalCompletedDays(newTotalCompletedDays);
     setBadges(updatedBadges);
 
-    const saved = await saveGoalData(
+    await saveGoalData(
       updatedGoals,
       updatedHistory,
       calculatedStreak,
@@ -465,38 +311,13 @@ export default function Goals() {
       newTotalCompletedDays,
       updatedBadges
     );
-
-    if (!saved) {
-      setGoals(previousGoals);
-      setGoalHistory(previousHistory);
-      setCurrentStreak(previousStreak);
-      setBestStreak(previousBest);
-      setTotalCompletedDays(previousTotalDays);
-      setBadges(previousBadges);
-      return false;
-    }
-
-    return true;
   };
 
-  /*
-   * YENİ HEDEF EKLE
-   */
-  const addGoal = async (
-    event: FormEvent<HTMLFormElement>
-  ) => {
+  const addGoal = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     const cleanText = newGoalText.trim();
 
-    if (
-      !cleanText ||
-      !user ||
-      isSaving ||
-      deletingGoalId !== null
-    ) {
-      return;
-    }
+    if (!cleanText || !user) return;
 
     const newGoal: Goal = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -510,30 +331,18 @@ export default function Goals() {
     const updatedHistory = buildTodayHistory(updatedGoals, goalHistory);
 
     setNewGoalText('');
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 1000);
+
     await processAndUpdate(updatedGoals, updatedHistory);
   };
 
-  /*
-   * HEDEFİ TAMAMLA / GERİ AL
-   */
-  const toggleGoal = async (
-    goalId: string
-  ) => {
-    if (
-      !user ||
-      isSaving ||
-      deletingGoalId !== null
-    ) {
-      return;
-    }
+  const toggleGoal = async (goalId: string) => {
+    if (!user) return;
 
     const updatedGoals = goals.map((goal) => {
-      if (goal.id !== goalId) {
-        return goal;
-      }
-
+      if (goal.id !== goalId) return goal;
       const nextCompleted = !goal.completed;
-
       return {
         ...goal,
         completed: nextCompleted,
@@ -545,43 +354,19 @@ export default function Goals() {
     await processAndUpdate(updatedGoals, updatedHistory);
   };
 
-  /*
-   * HEDEF SİL
-   */
-  const deleteGoal = async (
-    goalId: string
-  ) => {
-    if (!user || isSaving || deletingGoalId !== null) {
-      return;
-    }
+  const deleteGoal = async (goalId: string) => {
+    if (!user) return;
 
-    const goalToDelete = goals.find((goal) => goal.id === goalId);
-    if (!goalToDelete) return;
-
-    const confirmed = window.confirm(
-      `"${goalToDelete.text}" hedefini silmek istediğine emin misin?`
-    );
-
-    if (!confirmed) return;
-
-    setDeletingGoalId(goalId);
     const updatedGoals = goals.filter((goal) => goal.id !== goalId);
     const updatedHistory = buildTodayHistory(updatedGoals, goalHistory);
 
     await processAndUpdate(updatedGoals, updatedHistory);
-    setDeletingGoalId(null);
-  };
-
-  const getDailyCompletionTitle = () => {
-    if (!allGoalsCompleted) return '';
-    if (currentStreak <= 1) return '1. Gün Tamamlandı! 🏆';
-    return `${currentStreak}. Gün Tamamlandı! 🔥`;
   };
 
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen p-8 flex items-center justify-center">
-        <div className="bg-slate-900/70 backdrop-blur-md border border-slate-800 rounded-3xl px-8 py-6 text-center shadow-2xl">
+        <div className="bg-slate-900/75 backdrop-blur-md border border-slate-800 rounded-3xl px-8 py-6 text-center shadow-2xl">
           <div className="w-10 h-10 mx-auto mb-3 rounded-full border-4 border-white/10 border-t-teal-400 animate-spin" />
           <p className="text-sm font-semibold text-white">Hedeflerin yükleniyor...</p>
         </div>
@@ -592,7 +377,7 @@ export default function Goals() {
   if (!user) {
     return (
       <div className="min-h-screen p-8 flex items-center justify-center">
-        <div className="bg-slate-900/70 border border-slate-800 rounded-3xl p-8 text-center shadow-2xl">
+        <div className="bg-slate-900/75 border border-slate-800 rounded-3xl p-8 text-center shadow-2xl">
           <div className="text-4xl mb-4">🔐</div>
           <h2 className="text-xl font-bold text-white mb-2">Hedefler</h2>
           <p className="text-sm text-slate-400">Hedeflerini görmek için giriş yapmalısın.</p>
@@ -604,6 +389,12 @@ export default function Goals() {
   return (
     <div className="min-h-screen p-6 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
+
+        {saveError && (
+          <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold">
+            ⚠️ {saveError}
+          </div>
+        )}
 
         {/* BAŞLIK */}
         <div className="bg-slate-900/60 backdrop-blur-md p-7 rounded-3xl border border-slate-800 shadow-xl">
@@ -634,7 +425,7 @@ export default function Goals() {
           </div>
         </div>
 
-        {/* 🏆 ROZETLER BÖLÜMÜ */}
+        {/* ROZETLER */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6">
           <h2 className="font-extrabold text-white text-xl mb-4">
             🎖️ Başarı Rozetleri
@@ -678,7 +469,7 @@ export default function Goals() {
               <div className="text-4xl">🏆</div>
               <div>
                 <h2 className="text-xl font-extrabold text-white">
-                  {getDailyCompletionTitle()}
+                  {currentStreak <= 1 ? '1. Gün Tamamlandı! 🏆' : `${currentStreak}. Gün Tamamlandı! 🔥`}
                 </h2>
                 <p className="text-sm text-emerald-200/80 mt-1">
                   Bugünkü bütün hedeflerini tamamladın. Harika ilerliyorsun! 🔥
@@ -688,7 +479,7 @@ export default function Goals() {
           </div>
         )}
 
-        {/* YENİ HEDEF */}
+        {/* YENİ HEDEF EKLE */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6">
           <h2 className="font-extrabold text-white mb-4">
             ➕ Yeni Hedef Ekle
@@ -700,23 +491,19 @@ export default function Goals() {
             <input
               type="text"
               value={newGoalText}
-              onChange={(event) =>
-                setNewGoalText(event.target.value)
-              }
+              onChange={(event) => setNewGoalText(event.target.value)}
               placeholder="Örn: 30 dakika C# çalışması yap"
-              disabled={isSaving || deletingGoalId !== null}
-              className="flex-1 px-4 py-3 rounded-2xl bg-slate-950/70 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-teal-400 disabled:opacity-50"
+              className="flex-1 px-4 py-3 rounded-2xl bg-slate-950/70 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-teal-400"
             />
             <button
               type="submit"
-              disabled={
-                !newGoalText.trim() ||
-                isSaving ||
-                deletingGoalId !== null
-              }
-              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-teal-500 to-blue-600 text-white font-extrabold hover:scale-[1.02] transition disabled:opacity-50"
+              className={`px-6 py-3 rounded-2xl font-extrabold transition cursor-pointer ${
+                showSuccess
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-gradient-to-r from-teal-500 to-blue-600 text-white hover:scale-[1.02]'
+              }`}
             >
-              {isSaving ? 'Kaydediliyor...' : 'Hedef Ekle'}
+              {showSuccess ? 'Eklendi! ✨' : 'Hedef Ekle'}
             </button>
           </form>
         </div>
@@ -752,15 +539,14 @@ export default function Goals() {
                       : 'bg-slate-950/50 border-slate-800 hover:border-teal-500/40'
                   }`}
                 >
-                  <div className="flex items-center gap-4 p-5">
-                    <input
-                      type="checkbox"
-                      checked={goal.completed}
-                      disabled={isSaving || deletingGoalId !== null}
-                      onChange={() => toggleGoal(goal.id)}
-                      className="w-6 h-6 shrink-0 accent-teal-500 cursor-pointer disabled:opacity-50"
-                    />
-                    <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-4 p-5">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={goal.completed}
+                        onChange={() => toggleGoal(goal.id)}
+                        className="w-6 h-6 shrink-0 accent-teal-500 cursor-pointer"
+                      />
                       <div
                         className={`text-sm font-semibold break-words ${
                           goal.completed ? 'text-slate-500 line-through' : 'text-white'
@@ -768,23 +554,15 @@ export default function Goals() {
                       >
                         {goal.text}
                       </div>
-                      {goal.completed && (
-                        <div className="text-[10px] text-emerald-400 font-bold mt-1">
-                          ✓ Tamamlandı
-                        </div>
-                      )}
                     </div>
-                  </div>
 
-                  <div className="px-5 pb-5">
+                    {/* SİL BUTONU */}
                     <button
                       type="button"
                       onClick={() => deleteGoal(goal.id)}
-                      disabled={isSaving || deletingGoalId !== null}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 text-sm font-bold hover:bg-red-500/20 transition-all"
+                      className="px-3 py-1.5 rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 text-xs font-bold hover:bg-red-500/20 transition-all cursor-pointer"
                     >
-                      <span>🗑️</span>
-                      <span>{deletingGoalId === goal.id ? 'Siliniyor...' : 'Hedefi Sil'}</span>
+                      Sil
                     </button>
                   </div>
                 </div>

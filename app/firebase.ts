@@ -3,13 +3,12 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyASlvxUb4pwoI-3BE0ypMangTAKPKAitd4",
-  authDomain: "nexora-study-c648f.firebaseapp.com",
-  projectId: "nexora-study-c648f",
-  storageBucket: "nexora-study-c648f.firebasestorage.app",
-  messagingSenderId: "318582369289",
-  appId: "1:318582369289:web:27099a540e7c3639ccdcd8",
-  measurementId: "G-EH3XP810D0",
+  apiKey: "AIzaSyCjrlxdSRMefNAOhc8WHWAN9C1wl3eKy7g",
+  authDomain: "belora-study.firebaseapp.com",
+  projectId: "belora-study",
+  storageBucket: "belora-study.firebasestorage.app",
+  messagingSenderId: "522623674606",
+  appId: "1:522623674606:web:82a81feb4266672cadabff"
 };
 
 const app = initializeApp(firebaseConfig);

@@ -27,13 +27,8 @@ export default function QuickNotes() {
   const [content, setContent] = useState('');
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState('');
-
-  /*
-   * ============================================================
-   * FIREBASE + AUTH
-   * ============================================================
-   */
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(
@@ -76,45 +71,25 @@ export default function QuickNotes() {
     return () => unsubscribe();
   }, []);
 
-  /*
-   * ============================================================
-   * NOTLARI FIREBASE'E KAYDET
-   * ============================================================
-   */
-
-  const saveNotesToFirebase = async (updatedNotes: Note[]) => {
-    if (!user) {
-      return false;
-    }
-
+  const saveNotesToFirebase = async (updatedNotes: Note[]): Promise<boolean> => {
+    if (!user) return false;
     try {
       const userRef = doc(db, 'users', user.uid);
-
       await setDoc(
         userRef,
         {
           quickNotes: updatedNotes,
           updatedAt: serverTimestamp(),
         },
-        {
-          merge: true,
-        }
+        { merge: true }
       );
-
-      setNotes(updatedNotes);
       return true;
     } catch (firebaseError) {
       console.error('Notlar Firebase\'e kaydedilemedi:', firebaseError);
-      setError('Not Firebase\'e kaydedilemedi.');
+      setError('Not kaydedilemedi, bağlantını kontrol et.');
       return false;
     }
   };
-
-  /*
-   * ============================================================
-   * NOT EKLE / GÜNCELLE
-   * ============================================================
-   */
 
   const handleAddOrUpdateNote = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,14 +105,10 @@ export default function QuickNotes() {
 
     setError('');
 
-    /*
-     * ========================================================
-     * MEVCUT NOTU GÜNCELLE
-     * ========================================================
-     */
+    let updatedNotes: Note[] = [];
 
     if (isEditing) {
-      const updated = notes.map((note) =>
+      updatedNotes = notes.map((note) =>
         note.id === isEditing
           ? {
               ...note,
@@ -146,77 +117,35 @@ export default function QuickNotes() {
             }
           : note
       );
-
-      const saved = await saveNotesToFirebase(updated);
-
-      if (saved) {
-        setIsEditing(null);
-        setTitle('');
-        setContent('');
-      }
-
-      return;
+    } else {
+      const newNote: Note = {
+        id: Date.now().toString(),
+        title: title.trim() || 'Başlıksız Not',
+        content,
+        date: new Date().toLocaleDateString('tr-TR', {
+          day: 'numeric',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+      };
+      updatedNotes = [newNote, ...notes];
     }
 
-    /*
-     * ========================================================
-     * YENİ NOT OLUŞTUR
-     * ========================================================
-     */
+    // Önce Firebase'e kaydet, başarıyla kaydedilirse ekrana yansıt
+    const success = await saveNotesToFirebase(updatedNotes);
+    if (!success) return;
 
-    const newNote: Note = {
-      id: Date.now().toString(),
-      title: title.trim() || 'Başlıksız Not',
-      content,
-      date: new Date().toLocaleDateString('tr-TR', {
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    };
+    setNotes(updatedNotes);
+    setIsEditing(null);
+    setTitle('');
+    setContent('');
 
-    const updatedNotes = [newNote, ...notes];
-
-    try {
-      const userRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-      const existingData = userSnap.exists() ? userSnap.data() : {};
-
-      const currentCreatedCount =
-        typeof existingData.quickNotesCreatedCount === 'number'
-          ? existingData.quickNotesCreatedCount
-          : 0;
-
-      const newCreatedCount = currentCreatedCount + 1;
-
-      await setDoc(
-        userRef,
-        {
-          quickNotes: updatedNotes,
-          quickNotesCreatedCount: newCreatedCount,
-          completedNotesCount: newCreatedCount, // 🏆 Rozet sistemi senkronizasyonu için
-          updatedAt: serverTimestamp(),
-        },
-        {
-          merge: true,
-        }
-      );
-
-      setNotes(updatedNotes);
-      setTitle('');
-      setContent('');
-    } catch (firebaseError) {
-      console.error('Yeni not Firebase\'e kaydedilemedi:', firebaseError);
-      setError('Yeni not Firebase\'e kaydedilemedi.');
-    }
+    setShowSuccess(true);
+    setTimeout(() => {
+      setShowSuccess(false);
+    }, 1000);
   };
-
-  /*
-   * ============================================================
-   * NOT DÜZENLE
-   * ============================================================
-   */
 
   const handleEdit = (note: Note) => {
     setTitle(note.title);
@@ -224,22 +153,13 @@ export default function QuickNotes() {
     setIsEditing(note.id);
   };
 
-  /*
-   * ============================================================
-   * NOT SİL
-   * ============================================================
-   */
-
   const handleDelete = async (id: string) => {
     const filtered = notes.filter((note) => note.id !== id);
-    await saveNotesToFirebase(filtered);
+    const success = await saveNotesToFirebase(filtered);
+    if (success) {
+      setNotes(filtered);
+    }
   };
-
-  /*
-   * ============================================================
-   * YÜKLENİYOR
-   * ============================================================
-   */
 
   if (isLoading) {
     return (
@@ -249,19 +169,10 @@ export default function QuickNotes() {
           <p className="text-sm font-semibold text-gray-700">
             Notların yükleniyor...
           </p>
-          <p className="text-xs text-gray-400 mt-1">
-            Firebase verileri kontrol ediliyor.
-          </p>
         </div>
       </div>
     );
   }
-
-  /*
-   * ============================================================
-   * GİRİŞ YOK
-   * ============================================================
-   */
 
   if (!user) {
     return (
@@ -277,15 +188,8 @@ export default function QuickNotes() {
     );
   }
 
-  /*
-   * ============================================================
-   * SAYFA
-   * ============================================================
-   */
-
   return (
     <div className="w-full bg-white/60 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-white/50">
-      {/* BAŞLIK */}
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
           <span>📌</span>
@@ -296,18 +200,13 @@ export default function QuickNotes() {
         </div>
       </div>
 
-      {/* HATA */}
       {error && (
         <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
           ⚠️ {error}
         </div>
       )}
 
-      {/* FORM */}
-      <form
-        onSubmit={handleAddOrUpdateNote}
-        className="mb-8 space-y-4"
-      >
+      <form onSubmit={handleAddOrUpdateNote} className="mb-8 space-y-4">
         <input
           type="text"
           placeholder="Not başlığı ekle..."
@@ -327,9 +226,13 @@ export default function QuickNotes() {
         <div className="flex gap-3">
           <button
             type="submit"
-            className="flex-1 py-3 rounded-2xl bg-purple-600 text-white font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20"
+            className={`flex-1 py-3 rounded-2xl font-bold transition-all shadow-lg cursor-pointer ${
+              showSuccess
+                ? 'bg-emerald-600 text-white shadow-emerald-500/20'
+                : 'bg-purple-600 text-white hover:bg-purple-700 shadow-purple-500/20'
+            }`}
           >
-            {isEditing ? 'Notu Güncelle' : 'Notu Kaydet'}
+            {showSuccess ? 'Kaydedildi! ✨' : isEditing ? 'Notu Güncelle' : 'Notu Kaydet'}
           </button>
 
           {isEditing && (
@@ -340,7 +243,7 @@ export default function QuickNotes() {
                 setTitle('');
                 setContent('');
               }}
-              className="px-5 py-3 rounded-2xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition"
+              className="px-5 py-3 rounded-2xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition cursor-pointer"
             >
               İptal
             </button>
@@ -348,7 +251,6 @@ export default function QuickNotes() {
         </div>
       </form>
 
-      {/* NOTLAR */}
       {notes.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-5xl mb-4">📝</div>
@@ -379,14 +281,14 @@ export default function QuickNotes() {
                   <button
                     type="button"
                     onClick={() => handleEdit(note)}
-                    className="text-purple-600 font-medium"
+                    className="text-purple-600 font-medium cursor-pointer"
                   >
                     Düzenle
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDelete(note.id)}
-                    className="text-rose-500 font-medium"
+                    className="text-rose-500 font-medium cursor-pointer"
                   >
                     Sil
                   </button>

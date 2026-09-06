@@ -25,6 +25,7 @@ const menuItems = [
   { id: 'pomodoro', label: 'Pomodoro', icon: '🍅' },
   { id: 'hedefler', label: 'Hedefler', icon: '🎯' },
   { id: 'rozetler', label: 'Rozetler', icon: '🏆' },
+  { id: 'keşfet', label: 'Keşfet', icon: '🔍' },
   { id: 'ayarlar', label: 'Ayarlar', icon: '⚙️' },
 ];
 
@@ -32,7 +33,7 @@ export default function Sidebar({
   activeTab,
   setActiveTab,
   selectedLevel,
-  currentTheme = 'nexora-gradient',
+  currentTheme = 'belora-gradient',
   onLogout,
   currentUserName,
   userEmail,
@@ -43,7 +44,7 @@ export default function Sidebar({
 
   return (
     <>
-      {/* MOBİLDE ARKA PLAN KARARTMASI (Menü açıkken arkaya tıklayınca kapanır) */}
+      {/* MOBİLDE ARKA PLAN KARARTMASI */}
       {isOpen && setIsOpen && (
         <div
           onClick={() => setIsOpen(false)}
@@ -70,7 +71,7 @@ export default function Sidebar({
         <div className="px-4 pt-5 pb-4 border-b border-white/10 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-extrabold tracking-tight">
-              Nexora Study
+              Belora Study
             </h1>
 
             <div className="mt-2">
@@ -119,7 +120,7 @@ export default function Sidebar({
                 type="button"
                 onClick={() => {
                   setActiveTab(item.id);
-                  if (setIsOpen) setIsOpen(false); // Mobilde bir sekmeye basınca menüyü otomatik kapatır
+                  if (setIsOpen) setIsOpen(false);
                 }}
                 className={`
                   w-full
@@ -217,7 +218,7 @@ export default function Sidebar({
                     }
                   `}
                 >
-                  {userEmail || 'Nexora öğrencisi'}
+                  {userEmail || 'Belora öğrencisi'}
                 </div>
               </div>
             </div>
