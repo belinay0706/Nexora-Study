@@ -18,8 +18,8 @@ const articles: Article[] = [
     title: 'Etkili Çalışma Yöntemleri 🧠✨',
     category: 'Üretkenlik',
     readTime: '2 dk okuma',
-    // Minimalist, kitap okuyan el/beyin görseli
-    image: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=500&q=80',
+    // Minimalist, şık çalışma masası & not defteri görseli
+    image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=600&q=80',
     summary: 'Pasif okumak yerine zihni aktif çalıştırarak bilgiyi gerçekten kavrama ve kalıcı hale getirme yolları.',
     content: [
       'Etkili bir çalışma süreci, bilgiyi pasif bir şekilde okumak yerine zihni aktif olarak çalıştırmaktan geçer.',
@@ -33,8 +33,8 @@ const articles: Article[] = [
     title: 'Odaklanma ve Dikkati Toplama 🎯📱',
     category: 'Odaklanma',
     readTime: '2 dk okuma',
-    // Minimalist, telefon ve bitki/sadelik görseli
-    image: 'https://images.unsplash.com/photo-1520032484190-e5ef81d8bd67?w=500&q=80',
+    // Minimalist, sade ve odaklanmayı simgeleyen ortam görseli
+    image: 'https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?w=600&q=80',
     summary: 'Derin odaklanma sağlamak için dikkat dağıtıcı unsurları yönetme ve tek bir göreve kilitlenme stratejileri.',
     content: [
       'Günümüzün en büyük engeli olan dikkat dağıtıcı unsurları yönetmek, derin bir odaklanma sağlama yolundaki ilk adımdır.',
@@ -48,8 +48,8 @@ const articles: Article[] = [
     title: 'Günlük Planlama ve Zaman Yönetimi 🗓️ gün',
     category: 'Zaman Yönetimi',
     readTime: '2 dk okuma',
-    // Minimalist, ajanda ve kalem görseli
-    image: 'https://images.unsplash.com/photo-1506784365847-bbad939e9335?w=500&q=80',
+    // Minimalist ajanda, saat ve planlama görseli
+    image: 'https://images.unsplash.com/photo-1506784365847-bbad939e9335?w=600&q=80',
     summary: 'Zamanı kısıtlamak yerine doğru önceliklendirme yaparak sürdürülebilir ve verimli bir günlük düzen yaratma rehberi.',
     content: [
       'Başarılı bir gün planı, zamanı saat saat kısıtlamaktan ziyade doğru önceliklendirme yapmaktan geçer.',

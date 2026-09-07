@@ -25,6 +25,7 @@ const menuItems = [
   { id: 'pomodoro', label: 'Pomodoro', icon: '🍅' },
   { id: 'hedefler', label: 'Hedefler', icon: '🎯' },
   { id: 'rozetler', label: 'Rozetler', icon: '🏆' },
+  { id: 'flashcards', label: 'Flashcards', icon: '🎴' },
   { id: 'keşfet', label: 'Keşfet', icon: '🔍' },
   { id: 'ayarlar', label: 'Ayarlar', icon: '⚙️' },
 ];

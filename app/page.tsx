@@ -37,6 +37,7 @@ import Goal from './components/Goal';
 import CalendarView from './components/CalendarView';
 import QuestionBook from './components/QuestionBook';
 import Explore from './components/Explore';
+import Flashcards from './components/Flashcards';
 
 type AppUserProfile = {
   uid: string;
@@ -852,6 +853,10 @@ export default function Page() {
 
             <div className={activeTab === 'rozetler' ? 'block' : 'hidden'}>
               <Badges />
+            </div>
+
+            <div className={activeTab === 'flashcards' ? 'block' : 'hidden'}>
+              <Flashcards />
             </div>
 
             <div className={activeTab === 'keşfet' ? 'block' : 'hidden'}>

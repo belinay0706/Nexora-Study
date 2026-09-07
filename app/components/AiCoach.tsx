@@ -15,11 +15,11 @@ interface Message {
   content: string;
 }
 
-// 📚 Kapsamlı Eğitim Veri Tabanı (Tüm Sınıflar, Bölümler, Dersler ve Konular)
+// 📚 Kapsamlı Eğitim Veri Tabanı
 const CURRICULUM_DATA: Record<string, {
   grades: string[];
   departments?: string[];
-  lessons: Record<string, Record<string, string[]>>; // Sınıf -> Ders -> Konular
+  lessons: Record<string, Record<string, string[]>>;
 }> = {
   "1. Sınıf": {
     grades: ["1. Sınıf"],
@@ -186,6 +186,176 @@ const CURRICULUM_DATA: Record<string, {
       }
     }
   },
+  "IELTS Hazırlık": {
+    grades: ["IELTS"],
+    lessons: {
+      "IELTS": {
+        "Listening (Dinleme)": [
+          "Günlük Sosyal Diyaloglar",
+          "Akademik ve Eğitsel Konuşmalar",
+          "Kampüs İçi Bilgilendirmeler ve Ders Takibi"
+        ],
+        "Reading (Okuma)": [
+          "Genel Eğitim: Günlük İlanlar ve İşyeri Kuralları",
+          "Akademik: Bilim ve Teknoloji Metinleri",
+          "Akademik: Biyoloji ve Doğa Makaleleri",
+          "Akademik: Tarih, Ekonomi ve Jeoloji Metinleri"
+        ],
+        "Writing (Yazma)": [
+          "Task 1: Grafik ve Tablo Yorumlama",
+          "Task 1: Süreç ve Harita Analizi",
+          "Task 2: Sosyal ve Akademik Problem Makalesi",
+          "Task 2: Fikir Fırtınası ve Essay Yapısı"
+        ],
+        "Speaking (Konuşma)": [
+          "Part 1: Kişisel Bilgiler, Hobiler ve Günlük Yaşam",
+          "Part 2: Belirli Bir Konuda Kart Konuşması (Cue Card)",
+          "Part 3: Sosyal Meseleler ve Derinlemesine Tartışma"
+        ],
+        "Sık Karşılaşılan Konu Başlıkları": [
+          "Eğitim ve Öğrenim (Okul Sistemleri, Uzaktan Eğitim)",
+          "Teknoloji ve Bilim (Yapay Zeka, Sosyal Medya)",
+          "Çevre ve Doğa (İklim Değişikliği, Geri Dönüşüm)",
+          "Toplum ve Yaşam (Şehirleşme, Sağlık, Beslenme)",
+          "İş Dünyası ve Ekonomi (Kariyer, Uzaktan Çalışma)",
+          "Kültür ve Sanat (Gelenekler, Turizm, Medya)"
+        ]
+      }
+    }
+  },
+  "Endüstriyel Tasarım": {
+    grades: ["1. Sınıf", "2. Sınıf", "3. Sınıf", "4. Sınıf"],
+    lessons: {
+      "1. Sınıf": {
+        "Endüstriyel Tasarım 1": [
+          "Temel Tasarım İlkeleri (Nokta, Çizgi, Düzlem, Hacim)",
+          "Form, Oran-Orantı, Denge ve Kontrast",
+          "El Skeci (Eskiz) Geliştirme",
+          "Temel Modelaj Teknikleri",
+          "Nesne-Kullanıcı İlişkisine Giriş"
+        ]
+      },
+      "2. Sınıf": {
+        "Endüstriyel Tasarım 2": [
+          "Form-İşlev İlişkisi (El Aletleri ve Ev Eşyaları)",
+          "Malzeme Bilisi (Ahşap, Plastik, Metal Temelleri)",
+          "Atölye Modelleme ve Prototipleme",
+          "Ortografik ve Perspektif Teknik Çizim",
+          "İnsan Faktörü ve Ergonomi Temelleri"
+        ]
+      },
+      "3. Sınıf": {
+        "Endüstriyel Tasarım 3": [
+          "Karmaşık Ürün ve Sistem Tasarımı",
+          "Tüketici Elektroniği ve Küçük Ev Aletleri",
+          "Seri Üretim Yöntemlerine Uygun Detaylandırma",
+          "İleri Düzey 3D Modelleme",
+          "Bilgisayar Destekli Görselleştirme (Render)"
+        ]
+      },
+      "4. Sınıf": {
+        "Endüstriyel Tasarım 4": [
+          "Kamusal Alan Ürünleri ve Medikal Cihazlar",
+          "Sürdürülebilirlik Odaklı Ekolojik Tasarımlar",
+          "Kullanıcı Deneyimi (UX) Araştırmaları",
+          "Pazar Analizi ve Marka Kimliği",
+          "Seri Üretime Tam Uyumlu Prototip Geliştirme"
+        ]
+      }
+    }
+  },
+  "İngilizce Öğretmenliği": {
+    grades: ["1. Sınıf", "2. Sınıf", "3. Sınıf", "4. Sınıf"],
+    lessons: {
+      "1. Sınıf": { 
+        "Temel Dil Becerileri": ["Okuma", "Yazma", "Dinleme", "Konuşma", "Sesletim (Telaffuz)"], 
+        "İngilizce Dil Bilgisi": ["İngilizcenin Yapısı ve Gramer Sistemleri"], 
+        "Eğitim Bilimleri": ["Eğitime Giriş", "Eğitim Psikolojisi", "Eğitim Sosyolojisi", "Eğitim Felsefesi"], 
+        "Ortak Dersler": ["Türk Dili", "Atatürk İlkeleri ve İnkılap Tarihi", "Bilişim Teknolojileri"] 
+      },
+      "2. Sınıf": { 
+        "Dilbilim (Linguistics)": ["Dilbilime Giriş", "Fonetik ve Fonoloji", "Morfoloji", "Syntax (Sözdizimi)"], 
+        "İngiliz Edebiyatı": ["Edebiyat Metinleri İnceleme", "Şiir, Tiyatro ve Romanda Edebî Akımlar"], 
+        "Öğretim Teknolojileri": ["Eğitimde Materyal Tasarımı ve Teknoloji Kullanımı"], 
+        "Dil Edinimi": ["Çocukların ve Yetişkinlerin Ana Dili / Yabancı Dil Edinimi"] 
+      },
+      "3. Sınıf": { 
+        "Yöntem ve Yaklaşımlar": ["İngilizce Öğretiminde Yaklaşımlar, Yöntemler ve Teknikler"], 
+        "Çocuklara Yabancı Dil Öğretimi": ["Erken Yaşta Dil Öğretim İlke ve Etkinlikleri"], 
+        "Ölçme ve Değerlendirme": ["Yabancı Dil Sınavı Hazırlama ve Test Teknikleri"], 
+        "Dil Beceri Öğretimi": ["Okuma-Yazma Öğretimi", "Dinleme-Konuşma Öğretimi"], 
+        "Sınıf Yönetimi": ["Etkili Sınıf İçi İletişim ve Stratejiler"] 
+      },
+      "4. Sınıf": { 
+        "Öğretmenlik Uygulaması": ["Okullarda Gözlem ve Ders Anlatımı"], 
+        "Çeviri": ["Türkçe-İngilizce Karşılıklı Çeviri Teknikleri"], 
+        "Özel Eğitim ve Rehberlik": ["Kaynaştırma Eğitimi ve Rehberlik"], 
+        "Güncel Konular": ["Dil Öğretiminde Güncel Eğilimler ve Araştırma Yöntemleri"] 
+      }
+    }
+  },
+  "Beslenme ve Diyetetik": {
+    grades: ["1. Sınıf", "2. Sınıf", "3. Sınıf", "4. Sınıf"],
+    lessons: {
+      "1. Sınıf": { 
+        "Temel Bilimler": ["Genel Kimya", "Organik Kimya", "Anatomi", "Fizyoloji", "Temel Psikoloji"], 
+        "Mesleki Dersler": ["Beslenme İlkeleri I-II", "Besin Özellikleri ve Pişirme Yöntemleri", "Mesleki Oryantasyon"], 
+        "Ortak Dersler": ["Türk Dili", "Yabancı Dil", "Atatürk İlkeleri ve İnkılap Tarihi"] 
+      },
+      "2. Sınıf": { 
+        "Temel Tıp": ["Beslenme Biyokimyası", "Mikrobiyoloji ve Parazitoloji", "Patoloji"], 
+        "Mesleki Konular": ["Anne ve Çocuk Beslenmesi", "Beslenme Antropometrisi", "Besin Kimyası ve Analizleri", "Beslenme Ekolojisi"] 
+      },
+      "3. Sınıf": { 
+        "Klinik Beslenme": ["Hastalıklarda Beslenme Tedavisi I-II", "Yetişkin Hastalıklarında Tıbbi Beslenme Tedavisi"], 
+        "Toplum ve Kurum": ["Toplum Sağlığında Beslenme (Halk Sağlığı)", "Toplu Beslenme Sistemleri", "Menü Planlama", "Sporcu Beslenmesi"] 
+      },
+      "4. Sınıf": { 
+        "Mesleki Uygulama": ["Hastanelerde Klinik Stajı", "Toplum Sağlığı ve Saha Stajları"], 
+        "İleri Konular": ["Çocuk Hastalıklarında Beslenme Tedavisi", "Geriatri Beslenmesi", "Enteral-Parenteral Beslenme", "Mesleki Mevzuat ve Girişimcilik"] 
+      }
+    }
+  },
+  "Ebelik": {
+    grades: ["1. Sınıf", "2. Sınıf", "3. Sınıf", "4. Sınıf"],
+    lessons: {
+      "1. Sınıf": { 
+        "Temel Bilimler": ["Anatomi", "Fizyoloji", "Histoloji", "Mikrobiyoloji"], 
+        "Mesleki Esaslar": ["Ebelikte Temel İlke ve Uygulamalar"], 
+        "Ortak Dersler": ["Türk Dili", "Yabancı Dil", "Atatürk İlkeleri ve İnkılap Tarihi"] 
+      },
+      "2. Sınıf": { 
+        "Ebelik Bakımı": ["Gebelik Dönemi Ebelik Bakımı", "Doğum Dönemi Ebelik Bakımı", "Riskli Gebelikler"], 
+        "Destek Bilimler": ["Farmakoloji", "Patoloji", "Beslenme Temelleri"] 
+      },
+      "3. Sınıf": { 
+        "Uzmanlık Becerileri": ["Doğum Sonrası Ebelik Bakımı", "Yeni Doğan Sağlığı ve Hastalıkları", "Kadın Sağlığı ve Hastalıkları"], 
+        "Ruh Sağlığı": ["Ebelikte İletişim ve Psikoloji"] 
+      },
+      "4. Sınıf": { 
+        "Saha ve Uygulama": ["Klinik Saha Stajı", "Saha ve Toplum Sağlığı Ebelik Uygulamaları"], 
+        "Profesyonellik": ["Ebelikte Yönetim", "Ebelik Etiği ve Deontoloji", "Bitirme Projesi"] 
+      }
+    }
+  },
+  "Hukuk Fakültesi": {
+    grades: ["1. Sınıf", "2. Sınıf", "3. Sınıf", "4. Sınıf"],
+    lessons: {
+      "1. Sınıf": { 
+        "Temel Hukuk": ["Hukuka Giriş", "Anayasa Hukuku", "Roma Hukuku", "Medeni Hukuk (Başlangıç ve Kişiler Hukuku)"], 
+        "Sosyal Bilimler": ["Hukuk Felsefesi ve Sosyolojisi", "Ekonomi"] 
+      },
+      "2. Sınıf": { 
+        "Kamu ve Özel Hukuk": ["Borçlar Hukuku (Genel Hükümler)", "Ceza Hukuku (Genel Hükümler)", "İdare Hukuku", "Uluslararası Kamu Hukuku"] 
+      },
+      "3. Sınıf": { 
+        "Özel Hukuk": ["Borçlar Hukuku (Özel Hükümler)", "Ticaret Hukuku", "Eşya Hukuku", "Ceza Hukuku (Özel Hükümler)", "İdari Yargılama Hukuku", "Medeni Usul Hukuku"] 
+      },
+      "4. Sınıf": { 
+        "Uygulamalı Hukuk": ["İcra ve İflas Hukuku", "İş ve Sosyal Güvenlik Hukuku", "Devletler Özel Hukuku", "Ceza Muhakemesi Hukuku", "Miras Hukuku", "Adli Tıp"] 
+      }
+    }
+  },
   "Bilgisayar Mühendisliği": {
     grades: ["1. Sınıf", "2. Sınıf", "3. Sınıf", "4. Sınıf"],
     lessons: {
@@ -281,28 +451,23 @@ const CURRICULUM_DATA: Record<string, {
 };
 
 export default function AICoach() {
-  // Alan, Sınıf ve Bölüm Seçim State'leri
   const [selectedCategory, setSelectedCategory] = useState<string>("8. Sınıf (LGS)");
   const [selectedGrade, setSelectedGrade] = useState<string>("8. Sınıf");
 
-  // Çalışma Kriterleri
   const [totalHours, setTotalHours] = useState('3');
   const [motivation, setMotivation] = useState('Orta 😊');
   const [extraDetails, setExtraDetails] = useState('');
 
-  // Seçilen Dersler ve Konular (Map: Ders -> Konu Listesi)
   const [selectedLessonsAndTopics, setSelectedLessonsAndTopics] = useState<Record<string, string[]>>({});
 
   const [schedule, setSchedule] = useState<Session[]>([]);
   const [chatMessages, setChatMessages] = useState<Message[]>([
     { role: 'assistant', content: 'Merhaba! Ben senin yapay zeka koçunum. Sol taraftan kademeni ve derslerin altındaki çalışmak istediğin konuları seçebilir, günlük süreni ve motivasyonunu belirleyerek akıllı programını oluşturabilirsin! 🎯' }
   ]);
-  const [userInput, setUserInput] = useState('');
   const [loading, setLoading] = useState(false);
 
   const motivations = ['Düşük 🥱', 'Orta 😊', 'Yüksek 🔥'];
 
-  // Kategori değiştiğinde sınıf ve dersleri güncelle
   const handleCategoryChange = (cat: string) => {
     setSelectedCategory(cat);
     const grades = CURRICULUM_DATA[cat]?.grades || [];
@@ -314,7 +479,6 @@ export default function AICoach() {
 
   const currentLessonsMap = CURRICULUM_DATA[selectedCategory]?.lessons[selectedGrade] || {};
 
-  // Konu seçimi toggle
   const toggleTopicSelection = (lesson: string, topic: string) => {
     const currentTopics = selectedLessonsAndTopics[lesson] || [];
     if (currentTopics.includes(topic)) {
@@ -334,7 +498,6 @@ export default function AICoach() {
     }
   };
 
-  // LocalStorage'dan yükleme
   useEffect(() => {
     const saved = localStorage.getItem('nexore_ai_coach_schedule');
     if (saved) {
@@ -351,7 +514,6 @@ export default function AICoach() {
     localStorage.setItem('nexore_ai_coach_schedule', JSON.stringify(newSchedule));
   };
 
-  // A — Akıllı Program Oluşturucu
   const handleGenerateSchedule = async () => {
     if (Object.keys(selectedLessonsAndTopics).length === 0) {
       alert('Lütfen en az bir ders ve konu seçin!');
@@ -390,7 +552,7 @@ export default function AICoach() {
       `;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-3.6-flash',
         contents: prompt,
       });
 
@@ -402,7 +564,7 @@ export default function AICoach() {
       setChatMessages(prev => [
         ...prev,
         { role: 'user', content: `Bugün ${totalHours} saat, ${motivation} motivasyonla şu konulara çalışacağım: ${selectionSummary}` },
-        { role: 'assistant', content: 'Harika bir program hazırladım! Aşağıdan inceleyebilirsin. Programı değiştirmek istersen bana her zaman yazabilirsin.' }
+        { role: 'assistant', content: 'Harika bir program hazırladım! Aşağıdan inceleyebilirsin.' }
       ]);
     } catch (error) {
       console.error("Program oluşturulamadı:", error);
@@ -412,80 +574,30 @@ export default function AICoach() {
     }
   };
 
-  // B — AI Sohbet ile Programı Güncelleme
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userInput.trim()) return;
-
-    const newMsg = userInput;
-    setUserInput('');
-    setChatMessages(prev => [...prev, { role: 'user', content: newMsg }]);
-    setLoading(true);
-
-    try {
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-      const ai = new GoogleGenAI({ apiKey });
-
-      const prompt = `
-        Mevcut çalışma programı: ${JSON.stringify(schedule)}
-        Öğrencinin mesajı: "${newMsg}"
-        
-        Öğrencinin bu isteğine göre (örneğin süreyi azaltma, ders/konu çıkarma veya ekleme) çalışma programını güncelle.
-        Yanıtı şu saf JSON formatında dön (kesinlikle başka metin ekleme, markdown kullanma):
-        {
-          "replyMessage": "Öğrenciye vereceğin koçluk cevabı",
-          "updatedSchedule": [
-            {"lesson": "Ders Adı", "topic": "Konu Adı", "duration": 30, "type": "Çalışma"}
-          ]
-        }
-      `;
-
-      const response = await ai.models.generateContent({
-        model: ' gemini-3.5-flash',
-        contents: [prompt],
-      });
-
-      let resText = response.text || '';
-      resText = resText.replace(/```json/g, '').replace(/```/g, '').trim();
-      const data = JSON.parse(resText);
-
-      if (data.updatedSchedule && Array.isArray(data.updatedSchedule)) {
-        saveSchedule(data.updatedSchedule);
-      }
-
-      setChatMessages(prev => [...prev, { role: 'assistant', content: data.replyMessage }]);
-    } catch (error) {
-      console.error("Sohbet hatası:", error);
-      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Üzgünüm, şu an isteğini işleyemedim ama seni dinliyorum.' }]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6">
       
-      {/* Üst Başlık */}
-      <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-sm border border-amber-200/60 flex justify-between items-center">
+      {/* Üst Başlık - Mor Temalı */}
+      <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-sm border border-indigo-100 flex justify-between items-center">
         <div>
-          <span className="text-xs font-bold uppercase tracking-widest text-amber-700/75"> • Akıllı Asistan</span>
-          <h1 className="text-2xl font-extrabold text-amber-950">🤖 AI Koç & Kapsamlı Program Oluşturucu</h1>
+          <span className="text-xs font-bold uppercase tracking-widest text-indigo-600"> • Akıllı Asistan</span>
+          <h1 className="text-2xl font-extrabold text-slate-900">🤖 AI Koç & Kapsamlı Program Oluşturucu</h1>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Sol Panel: Kademeler, Konular ve Ayarlar */}
-        <div className="bg-white/90 rounded-2xl p-6 shadow-sm border border-amber-200/80 space-y-5 lg:col-span-1">
-          <h2 className="text-base font-extrabold text-amber-950">⚙️ Sınıf, Ders ve Konu Seçimi</h2>
+        <div className="bg-white/90 rounded-2xl p-6 shadow-sm border border-indigo-100 space-y-5 lg:col-span-1">
+          <h2 className="text-base font-extrabold text-indigo-950">⚙️ Sınıf, Ders ve Konu Seçimi</h2>
           
           {/* Kategori / Sınıf Seçimi */}
           <div className="space-y-1">
-            <label className="block text-xs font-bold text-amber-900">Eğitim Kademesi / Bölüm</label>
+            <label className="block text-xs font-bold text-indigo-900">Eğitim Kademesi / Bölüm</label>
             <select
               value={selectedCategory}
               onChange={(e) => handleCategoryChange(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-amber-200 bg-amber-50/50 text-xs font-semibold text-amber-900 focus:outline-none"
+              className="w-full px-3 py-2 rounded-xl border border-indigo-200 bg-indigo-50/40 text-xs font-semibold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
               {Object.keys(CURRICULUM_DATA).map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
@@ -493,25 +605,44 @@ export default function AICoach() {
             </select>
           </div>
 
+          {/* Sınıf Seçimi (Birden fazla sınıf içeren bölümler için) */}
+          {CURRICULUM_DATA[selectedCategory]?.grades.length > 1 && (
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-indigo-900">Sınıf</label>
+              <select
+                value={selectedGrade}
+                onChange={(e) => {
+                  setSelectedGrade(e.target.value);
+                  setSelectedLessonsAndTopics({});
+                }}
+                className="w-full px-3 py-2 rounded-xl border border-indigo-200 bg-indigo-50/40 text-xs font-semibold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              >
+                {CURRICULUM_DATA[selectedCategory].grades.map(grade => (
+                  <option key={grade} value={grade}>{grade}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Çalışma Süresi ve Motivasyon */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-amber-900 mb-1">Süre (Saat)</label>
+              <label className="block text-xs font-bold text-indigo-900 mb-1">Süre (Saat)</label>
               <input
                 type="number"
                 min="1"
                 max="10"
                 value={totalHours}
                 onChange={(e) => setTotalHours(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-amber-200 bg-amber-50/50 text-xs font-semibold text-amber-900 focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl border border-indigo-200 bg-indigo-50/40 text-xs font-semibold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-amber-900 mb-1">Ruh Hali / Motivasyon</label>
+              <label className="block text-xs font-bold text-indigo-900 mb-1">Ruh Hali / Motivasyon</label>
               <select
                 value={motivation}
                 onChange={(e) => setMotivation(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-amber-200 bg-amber-50/50 text-xs font-semibold text-amber-900 focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl border border-indigo-200 bg-indigo-50/40 text-xs font-semibold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               >
                 {motivations.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
@@ -519,14 +650,14 @@ export default function AICoach() {
           </div>
 
           {/* Dersler ve Alt Konular Alanı */}
-          <div className="space-y-3 max-h-72 overflow-y-auto pr-1 border-t border-b border-amber-100 py-3">
-            <label className="block text-xs font-bold text-amber-900">Dersler ve Çalışılacak Konular:</label>
+          <div className="space-y-3 max-h-72 overflow-y-auto pr-1 border-t border-b border-indigo-100 py-3">
+            <label className="block text-xs font-bold text-indigo-900">Dersler ve Çalışılacak Konular:</label>
             {Object.keys(currentLessonsMap).length === 0 ? (
               <p className="text-xs text-gray-400 italic">Konu bulunamadı.</p>
             ) : (
               Object.entries(currentLessonsMap).map(([lessonName, topics]) => (
-                <div key={lessonName} className="bg-amber-50/40 p-3 rounded-xl border border-amber-100 space-y-2">
-                  <span className="text-xs font-extrabold text-amber-950 block">📖 {lessonName}</span>
+                <div key={lessonName} className="bg-indigo-50/30 p-3 rounded-xl border border-indigo-100/80 space-y-2">
+                  <span className="text-xs font-extrabold text-indigo-950 block">📖 {lessonName}</span>
                   <div className="flex flex-wrap gap-1.5">
                     {topics.map(topic => {
                       const isSelected = selectedLessonsAndTopics[lessonName]?.includes(topic);
@@ -537,8 +668,8 @@ export default function AICoach() {
                           onClick={() => toggleTopicSelection(lessonName, topic)}
                           className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-all ${
                             isSelected
-                              ? 'bg-amber-700 text-white border-amber-700 shadow-xs'
-                              : 'bg-white text-gray-700 border-gray-200 hover:bg-amber-100'
+                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                              : 'bg-white text-gray-700 border-gray-200 hover:bg-indigo-50'
                           }`}
                         >
                           {topic} {isSelected && '✓'}
@@ -552,37 +683,39 @@ export default function AICoach() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-amber-900 mb-1">Ekstra Detaylar (İsteğe Bağlı)</label>
+            <label className="block text-xs font-bold text-indigo-900 mb-1">Ekstra Detaylar (İsteğe Bağlı)</label>
             <input
               type="text"
               placeholder="Örn: Akşam sporum var, molalar uzun olsun..."
               value={extraDetails}
               onChange={(e) => setExtraDetails(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-amber-200 bg-amber-50/50 text-xs text-amber-900 focus:outline-none"
+              className="w-full px-3 py-2 rounded-xl border border-indigo-200 bg-indigo-50/40 text-xs text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
           <button
             onClick={handleGenerateSchedule}
             disabled={loading}
-            className="w-full py-3 bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-xl shadow-md transition-all text-xs"
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md transition-all text-xs"
           >
             {loading ? 'Program Hazırlanıyor... ⏳' : 'Akıllı Program Oluştur 🚀'}
           </button>
         </div>
 
-        {/* Sağ Panel: Güncel Program & AI Sohbet */}
-        <div className="bg-white/90 rounded-2xl p-6 shadow-sm border border-amber-200/80 space-y-6 lg:col-span-2 flex flex-col justify-between">
+        {/* Sağ Panel: Güncel Program & AI Bildirim Akışı */}
+        <div className="bg-white/90 rounded-2xl p-6 shadow-sm border border-indigo-100 space-y-6 lg:col-span-2 flex flex-col justify-between">
           
-          {/* Güncel Program Görüntüleme */}
+          {/* Güncel Program Görüntüleme - Yükseklik max-h-80 */}
           <div className="space-y-3">
-            <h2 className="text-base font-extrabold text-amber-950">📅 Bugünkü Çalışma Programın</h2>
+            <h2 className="text-base font-extrabold text-indigo-950">📅 Bugünkü Çalışma Programın</h2>
             {schedule.length === 0 ? (
-              <p className="text-xs text-gray-500 italic bg-gray-50 p-4 rounded-xl border">Henüz bir program oluşturulmadı. Sol taraftan derslerini ve konularını seçip akıllı program oluşturabilirsin.</p>
+              <p className="text-xs text-gray-500 italic bg-slate-50 p-4 rounded-xl border border-slate-100">
+                Henüz bir program oluşturulmadı. Sol taraftan derslerini ve konularını seçip akıllı program oluşturabilirsin.
+              </p>
             ) : (
-              <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                 {schedule.map((session, index) => (
-                  <div key={index} className={`flex justify-between items-center p-3 rounded-xl border text-xs font-bold ${session.type === 'Mola' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50/60 border-amber-200 text-amber-950'}`}>
+                  <div key={index} className={`flex justify-between items-center p-3 rounded-xl border text-xs font-bold ${session.type === 'Mola' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-indigo-50/50 border-indigo-100 text-indigo-950'}`}>
                     <div className="space-y-0.5">
                       <span>{session.type === 'Mola' ? '☕ Mola' : `📖 ${session.lesson}`}</span>
                       {session.topic && <span className="block text-[11px] font-normal text-gray-600">Konu: {session.topic}</span>}
@@ -594,37 +727,18 @@ export default function AICoach() {
             )}
           </div>
 
-          {/* AI Sohbet Alanı */}
-          <div className="space-y-3 pt-4 border-t border-amber-100 flex-1 flex flex-col justify-between">
-            <h2 className="text-sm font-extrabold text-amber-950">💬 AI Koç ile Canlı Sohbet & Program Güncelleme</h2>
-            
-            <div className="bg-gray-50 rounded-2xl p-4 h-44 overflow-y-auto space-y-3 border border-gray-100">
+          {/* AI Akış / Bildirim Alanı */}
+          <div className="space-y-3 pt-4 border-t border-indigo-100 flex-1 flex flex-col justify-end">
+            <div className="bg-indigo-50/30 rounded-2xl p-4 max-h-48 overflow-y-auto space-y-3 border border-indigo-100/60">
               {chatMessages.map((msg, index) => (
                 <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] px-3.5 py-2 rounded-2xl text-xs font-medium ${msg.role === 'user' ? 'bg-amber-700 text-white rounded-br-none' : 'bg-white text-gray-800 border border-amber-200 rounded-bl-none shadow-xs'}`}>
+                  <div className={`max-w-[85%] px-3.5 py-2 rounded-2xl text-xs font-medium ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white text-gray-800 border border-indigo-100 rounded-bl-none shadow-xs'}`}>
                     {msg.content}
                   </div>
                 </div>
               ))}
-              {loading && <div className="text-xs text-gray-400 italic">AI koç düşünüyor ve programı güncelliyor...</div>}
+              {loading && <div className="text-xs text-indigo-500 font-semibold italic">AI koç kişiselleştirilmiş programını analiz ediyor...</div>}
             </div>
-
-            <form onSubmit={handleSendMessage} className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Örn: Bugün çok yoruldum süreyi 2 saate indir, ya da matematiği çıkar..."
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                className="flex-1 px-3.5 py-2 rounded-xl border border-amber-200 text-xs bg-amber-50/30 focus:outline-none text-gray-800"
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-4 py-2 bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-xl text-xs shadow-sm transition-all"
-              >
-                Gönder 🚀
-              </button>
-            </form>
           </div>
 
         </div>

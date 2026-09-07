@@ -90,7 +90,7 @@ export default function Badges() {
     {
       id: 1,
       title: 'İlk Adım',
-      desc: 'Nexora Study ile ilk hedefini tamamla.',
+      desc: 'Belora Study ile ilk hedefini tamamla.',
       icon: '🎯',
       category: 'Başlangıç',
       rarity: 'common',

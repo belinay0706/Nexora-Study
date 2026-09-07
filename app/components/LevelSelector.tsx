@@ -27,9 +27,15 @@ export default function LevelSelector({ onSelectLevel, onBackToLogin }: { onSele
             <button onClick={() => setCategory('universite')} className="p-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl text-center transition cursor-pointer">
               <span className="text-2xl block mb-1">🎓</span> Üniversite
             </button>
-            <button onClick={() => onSelectLevel('KPSS')} className="col-span-2 p-4 bg-teal-600/40 hover:bg-teal-600/60 border border-teal-400/30 rounded-2xl text-center transition cursor-pointer">
+            
+            {/* Sınav ve Dil Hazırlık Butonları */}
+            <button onClick={() => onSelectLevel('KPSS Hazırlık')} className="p-4 bg-teal-600/40 hover:bg-teal-600/60 border border-teal-400/30 rounded-2xl text-center transition cursor-pointer">
               <span className="text-2xl block mb-1">🎯</span> KPSS
             </button>
+            <button onClick={() => onSelectLevel('IELTS Hazırlık')} className="p-4 bg-indigo-600/40 hover:bg-indigo-600/60 border border-indigo-400/30 rounded-2xl text-center transition cursor-pointer">
+              <span className="text-2xl block mb-1">🗣️</span> IELTS Hazırlık
+            </button>
+
             <button onClick={onBackToLogin} className="col-span-2 p-3 bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 rounded-2xl text-center text-xs transition cursor-pointer">
               ← Geri Dön / Çıkış Yap
             </button>
@@ -58,7 +64,7 @@ export default function LevelSelector({ onSelectLevel, onBackToLogin }: { onSele
           <div className="space-y-3">
             <h2 className="text-sm font-bold text-teal-300">Lise Seviyesi Seç:</h2>
             <div className="grid grid-cols-2 gap-3">
-              {['9. Sınıf ', '10. Sınıf ', '11. Sınıf ', '12. Sınıf '].map((lvl) => (
+              {['Lise (9. Sınıf)', 'Lise (10. Sınıf)', 'Lise (11. Sınıf)', 'Lise (12. Sınıf / YKS)'].map((lvl) => (
                 <button key={lvl} onClick={() => onSelectLevel(lvl)} className="p-3 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-semibold cursor-pointer">{lvl}</button>
               ))}
             </div>
@@ -69,13 +75,18 @@ export default function LevelSelector({ onSelectLevel, onBackToLogin }: { onSele
             <h2 className="text-sm font-bold text-teal-300">Üniversite Fakülte / Bölümünü Seç:</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
               {[
+                'Endüstriyel Tasarım',
+                'Ebelik',
+                'Hukuk Fakültesi',
+                'İngilizce Öğretmenliği',
+                'Beslenme ve Diyetetik',
                 'Bilgisayar Mühendisliği',
-                'Elektrik Elektronik Mühendisliği',
+                'Elektrik Elektronik Müh.',
                 'Endüstri Mühendisliği',
                 'İnşaat Mühendisliği',
                 'Makine Mühendisliği',
                 'Yazılım Mühendisliği',
-                'Havacılık ve Uzay Mühendisliği',
+                'Havacılık ve Uzay Müh.',
                 'Tıp Fakültesi',
                 'Diş Hekimliği Fakültesi',
                 'Hemşirelik Fakültesi'
