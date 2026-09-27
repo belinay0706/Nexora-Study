@@ -58,7 +58,7 @@ export default function Flashcards() {
     } catch (error) {
       console.error('Dosya okuma hatası:', error);
       alert('Dosya okunurken bir hata oluştu.');
-    } finally {
+    } fontally {
       setIsLoading(false);
     }
   };
@@ -218,6 +218,19 @@ export default function Flashcards() {
           Ders notlarını veya özetini ekle; Belora senin için
           çalışma kartları oluştursun.
         </p>
+      </div>
+
+      {/* 🚀 ADSENSE & KULLANICI BİLGİLENDİRME DUYURUSU */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent p-5 rounded-3xl border border-amber-300/40 backdrop-blur-sm flex items-start gap-4 shadow-xs">
+        <span className="text-2xl p-2 bg-amber-100 dark:bg-amber-900/30 rounded-2xl">✨</span>
+        <div className="space-y-1">
+          <h2 className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+            Sistem Güncellemesi
+          </h2>
+          <p className="text-xs text-slate-600 leading-relaxed font-medium">
+            Flashcards modülümüz daha hızlı ve akıllı yapay zeka modelleriyle güncelleniyor! Şimdilik aşağıdaki deneme alanından metin yapıştırarak temel kart oluşturma sistemimizi test edebilirsiniz.
+          </p>
+        </div>
       </div>
 
       {/* GİRİŞ ALANI */}
@@ -415,6 +428,42 @@ export default function Flashcards() {
 
         </div>
       )}
+
+      {/* 🧠 Bilgi Kartları İle Etkili Öğrenme Rehberi */}
+      <div className="bg-white/80 backdrop-blur-md p-8 rounded-3xl border border-amber-200/60 shadow-sm space-y-6 text-slate-700 mt-8">
+        <div className="border-b border-amber-100 pb-4">
+          <h2 className="text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+            <span>💡</span> Bilgi Kartları (Flashcards) İle Aktif Hatırlama Stratejisi
+          </h2>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Ezberlemek yerine zihni zorlayarak öğrenme: Aktif Hatırlama (Active Recall) tekniğinin gücü.
+          </p>
+        </div>
+
+        <p className="text-xs leading-relaxed text-slate-600">
+          Nörobilim araştırmaları, bir bilgiyi tekrar tekrar okumanın (Pasif Okuma) sadece illüzyonel bir öğrenme hissi yarattığını göstermektedir. Gerçek ve kalıcı öğrenme, zihnin cevabı hatırlamak için kendini zorladığı <strong>Active Recall (Aktif Hatırlama)</strong> anında gerçekleşir. Yapay Zeka Flashcards modülümüz bu bilimsel ilkeyi temel alarak tasarlanmıştır.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-100 space-y-1.5">
+            <h3 className="font-bold text-xs text-amber-950 flex items-center gap-2">
+              <span>🎯</span> Leitner Kutusu Sistemi
+            </h3>
+            <p className="text-[11px] leading-relaxed text-slate-600">
+              Doğru yanıtladığınız kartlar daha seyrek, yanlış yanıtladığınız veya zorlandığınız kartlar daha sık karşınıza çıkar. Böylece zamanınızı zaten bildiğiniz şeylere değil, eksiklerinize harcarsınız.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-100 space-y-1.5">
+            <h3 className="font-bold text-xs text-amber-950 flex items-center gap-2">
+              <span>🧠</span> Zihinsel Bağ Bağlantıları
+            </h3>
+            <p className="text-[11px] leading-relaxed text-slate-600">
+              Sorunun cevabını görmeden önce en az 5 saniye boyunca cevabı zihninizde canlandırmaya çalışın. Tıkandığınız an cevabı görmek, nöronlar arasındaki bağı %50 daha güçlü kurar.
+            </p>
+          </div>
+        </div>
+      </div>
 
     </div>
   );
