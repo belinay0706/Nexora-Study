@@ -168,6 +168,7 @@ export default function Program() {
 
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-6">
+      {/* Üst Başlık Kartı */}
       <div className="bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-sm">
         <h1 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
           <span>📅</span> Haftalık Ders Programım
@@ -177,6 +178,7 @@ export default function Program() {
         </p>
       </div>
 
+      {/* Gün Seçim Butonları */}
       <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
         {days.map((day) => (
           <button
@@ -199,6 +201,7 @@ export default function Program() {
         </div>
       )}
 
+      {/* Program Gösterimi & Yeni Ders Ekleme */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between space-y-4">
           <div>
@@ -263,6 +266,64 @@ export default function Program() {
               {showSuccess ? 'Eklendi! ✨' : 'Programa Ekle'}
             </button>
           </form>
+        </div>
+      </div>
+
+      {/* 🧠 Bilimsel Tekniklerle Verimli Çalışma Rehberi */}
+      <div className="bg-white/80 backdrop-blur-md p-8 rounded-3xl border border-slate-200/80 shadow-sm space-y-6 text-slate-700 mt-8">
+        <div className="border-b border-slate-100 pb-4">
+          <h2 className="text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+            <span>🧠</span> Bilimsel Tekniklerle Verimli Ders Çalışma Programı Nasıl Hazırlanır?
+          </h2>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Başarı, rastgele ve kontrolsüz saatler boyunca masada oturmakla değil; zihinsel kapasiteyi ve zamanı doğru yöneten sürdürülebilir stratejilerle gelir.
+          </p>
+        </div>
+
+        <p className="text-xs leading-relaxed text-slate-600">
+          Birçok öğrencinin düştüğü en büyük tuzak, güne ve haftaya saat saat aşırı katı programlar yazıp birkaç gün sonra bu temposuzluğa yenik düşmektir. Bilişsel psikoloji ve nörobilim araştırmaları, sabit ve baskıcı programlar yerine <strong className="text-slate-800">esnek, modüler ve hedef odaklı</strong> planların uzun vadeli akademik başarıyı %70 oranında artırdığını göstermektedir. Etkili ve sürdürülebilir bir çalışma programı oluştururken dikkate almanız gereken temel ilkeler şunlardır:
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/60 space-y-1.5">
+            <h3 className="font-bold text-xs text-slate-900 flex items-center gap-2">
+              <span>🔄</span> Aralıklı Tekrar (Spaced Repetition)
+            </h3>
+            <p className="text-[11px] leading-relaxed text-slate-600">
+              Ebbinghaus’un "Unutma Eğrisi" teorisine göre, öğrenilen yeni bir bilginin %70'i ilk 24 saat içinde unutulur. Programınıza sadece yeni konu öğrenme saatleri değil; 1. gün, 7. gün ve 30. gün için kısa tekrar blokları yerleştirerek bilginin kısa süreli bellekten kalıcı hafızaya aktarılmasını sağlayın.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/60 space-y-1.5">
+            <h3 className="font-bold text-xs text-slate-900 flex items-center gap-2">
+              <span>⚡</span> Sirkadiyen Ritim & Enerji Yönetimi
+            </h3>
+            <p className="text-[11px] leading-relaxed text-slate-600">
+              Her bireyin biyolojik saati farklıdır. Analitik düşünme, yoğun mantık ve problem çözme gerektiren zor dersleri (Matematik, Fizik, Yazılım vb.) günün en yüksek odaklanma seviyesine sahip olduğunuz "altın saatlerinize" yerleştirin. Rutin ezber ve okumaları ise enerjinizin daha düşük olduğu zaman dilimlerine bırakın.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/60 space-y-1.5">
+            <h3 className="font-bold text-xs text-slate-900 flex items-center gap-2">
+              <span>⏳</span> Parkinson Yasası ve Zaman Sınırları
+            </h3>
+            <p className="text-[11px] leading-relaxed text-slate-600">
+              "Bir iş, ona ayrılan sürenin tamamını kapsayacak şekilde genişler." Bir konuya "tüm gün" ayırmak yerine, ona 90 dakikalık net bir sınır koyduğunuzda beyniniz daha yüksek bir baskı ve odaklanmayla çalışır.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/60 space-y-1.5">
+            <h3 className="font-bold text-xs text-slate-900 flex items-center gap-2">
+              <span>🎯</span> Zaman Değil, Görev Odaklı Planlama
+            </h3>
+            <p className="text-[11px] leading-relaxed text-slate-600">
+              "Saat 14:00 - 16:00 arası ders çalışacağım" demek yerine "Bugün 30 soru çözüp 2 sayfa özet çıkaracağım" şeklinde somut hedefler belirleyin. Tamamlanan her görev, beyninizde dopamin salgılatarak çalışma isteğinizi canlı tutar.
+            </p>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-teal-50/80 border border-teal-100 text-[11px] text-teal-900 font-medium leading-relaxed">
+          💡 <strong>Tampon Zaman (Buffer Time) Bırakın:</strong> Haftalık programınızı hazırlarken en az 1 yarım günü tamamen boş bırakın. Bu süreyi hafta içinde aksayan konuları telafi etmek veya kendinize ödül molası vermek için kullanın. Bu yaklaşım, beklenmedik aksaklıklarda suçluluk hissetmenizi engeller.
         </div>
       </div>
     </div>

@@ -190,115 +190,176 @@ export default function QuickNotes() {
   }
 
   return (
-    <div className="w-full bg-white/60 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-white/50">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-          <span>📌</span>
-          Hızlı Notlarım
-        </h2>
-        <div className="bg-purple-100 text-purple-700 px-4 py-1.5 rounded-full text-sm font-semibold">
-          {notes.length} Aktif Not
+    <div className="space-y-8">
+      {/* Not Ekleme & Liste Paneli */}
+      <div className="w-full bg-white/60 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-white/50">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+            <span>📌</span>
+            Hızlı Notlarım
+          </h2>
+          <div className="bg-purple-100 text-purple-700 px-4 py-1.5 rounded-full text-sm font-semibold">
+            {notes.length} Aktif Not
+          </div>
         </div>
-      </div>
 
-      {error && (
-        <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-          ⚠️ {error}
-        </div>
-      )}
+        {error && (
+          <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+            ⚠️ {error}
+          </div>
+        )}
 
-      <form onSubmit={handleAddOrUpdateNote} className="mb-8 space-y-4">
-        <input
-          type="text"
-          placeholder="Not başlığı ekle..."
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-5 py-3 rounded-2xl border-0 bg-white/50 focus:ring-2 focus:ring-purple-500/20 text-gray-700 placeholder-gray-400"
-        />
+        <form onSubmit={handleAddOrUpdateNote} className="mb-8 space-y-4">
+          <input
+            type="text"
+            placeholder="Not başlığı ekle..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full px-5 py-3 rounded-2xl border-0 bg-white/50 focus:ring-2 focus:ring-purple-500/20 text-gray-700 placeholder-gray-400"
+          />
 
-        <textarea
-          placeholder="Düşüncelerini buraya not et..."
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={3}
-          className="w-full px-5 py-3 rounded-2xl border-0 bg-white/50 focus:ring-2 focus:ring-purple-500/20 text-gray-700 placeholder-gray-400 resize-none"
-        />
+          <textarea
+            placeholder="Düşüncelerini buraya not et..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            rows={3}
+            className="w-full px-5 py-3 rounded-2xl border-0 bg-white/50 focus:ring-2 focus:ring-purple-500/20 text-gray-700 placeholder-gray-400 resize-none"
+          />
 
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            className={`flex-1 py-3 rounded-2xl font-bold transition-all shadow-lg cursor-pointer ${
-              showSuccess
-                ? 'bg-emerald-600 text-white shadow-emerald-500/20'
-                : 'bg-purple-600 text-white hover:bg-purple-700 shadow-purple-500/20'
-            }`}
-          >
-            {showSuccess ? 'Kaydedildi! ✨' : isEditing ? 'Notu Güncelle' : 'Notu Kaydet'}
-          </button>
-
-          {isEditing && (
+          <div className="flex gap-3">
             <button
-              type="button"
-              onClick={() => {
-                setIsEditing(null);
-                setTitle('');
-                setContent('');
-              }}
-              className="px-5 py-3 rounded-2xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition cursor-pointer"
+              type="submit"
+              className={`flex-1 py-3 rounded-2xl font-bold transition-all shadow-lg cursor-pointer ${
+                showSuccess
+                  ? 'bg-emerald-600 text-white shadow-emerald-500/20'
+                  : 'bg-purple-600 text-white hover:bg-purple-700 shadow-purple-500/20'
+              }`}
             >
-              İptal
+              {showSuccess ? 'Kaydedildi! ✨' : isEditing ? 'Notu Güncelle' : 'Notu Kaydet'}
             </button>
-          )}
-        </div>
-      </form>
 
-      {notes.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-5xl mb-4">📝</div>
-          <p className="font-bold text-gray-700">
-            Henüz notun yok.
-          </p>
-          <p className="text-sm text-gray-400 mt-1">
-            İlk notunu oluşturarak başla.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {notes.map((note) => (
-            <div
-              key={note.id}
-              className="bg-white/80 p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all"
-            >
-              <h3 className="font-bold text-gray-800 mb-2">
-                {note.title}
-              </h3>
-              <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                {note.content}
-              </p>
+            {isEditing && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditing(null);
+                  setTitle('');
+                  setContent('');
+                }}
+                className="px-5 py-3 rounded-2xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition cursor-pointer"
+              >
+                İptal
+              </button>
+            )}
+          </div>
+        </form>
 
-              <div className="flex justify-between items-center text-xs text-gray-400 border-t pt-3">
-                <span>{note.date}</span>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleEdit(note)}
-                    className="text-purple-600 font-medium cursor-pointer"
-                  >
-                    Düzenle
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(note.id)}
-                    className="text-rose-500 font-medium cursor-pointer"
-                  >
-                    Sil
-                  </button>
+        {notes.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-5xl mb-4">📝</div>
+            <p className="font-bold text-gray-700">
+              Henüz notun yok.
+            </p>
+            <p className="text-sm text-gray-400 mt-1">
+              İlk notunu oluşturarak başla.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {notes.map((note) => (
+              <div
+                key={note.id}
+                className="bg-white/80 p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all"
+              >
+                <h3 className="font-bold text-gray-800 mb-2">
+                  {note.title}
+                </h3>
+                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                  {note.content}
+                </p>
+
+                <div className="flex justify-between items-center text-xs text-gray-400 border-t pt-3">
+                  <span>{note.date}</span>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(note)}
+                      className="text-purple-600 font-medium cursor-pointer"
+                    >
+                      Düzenle
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(note.id)}
+                      className="text-rose-500 font-medium cursor-pointer"
+                    >
+                      Sil
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 🧠 Kalıcı Öğrenme İçin Etkili Not Alma Rehberi */}
+      <div className="w-full bg-white/60 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-white/50 text-gray-700 space-y-6">
+        <div className="border-b border-purple-100 pb-4">
+          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <span>🧠</span> Kalıcı Öğrenme İçin Etkili Not Alma Metotları
+          </h2>
+          <p className="text-xs text-gray-500 mt-1 font-medium">
+            Not almak sadece duyulanı veya okunanı aynen kopyalamak değildir; bilgiyi zihinde işleyip anlamlandırma sürecidir.
+          </p>
         </div>
-      )}
+
+        <p className="text-xs leading-relaxed text-gray-600">
+          Akademik çalışmalarda en sık yapılan hata, pasif not alma adı verilen metnin birebir aynısını yazma alışkanlığıdır. Bilişsel psikoloji araştırmaları, kendi kelimelerinizle özetleyerek yapılan <strong>aktif not alma</strong> süreçlerinin hatırlama oranını %80'e kadar çıkardığını göstermektedir. Notlarınızdan maksimum verim almak için uygulayabileceğiniz bilimsel teknikler şunlardır:
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          <div className="p-4 rounded-2xl bg-white/80 border border-purple-50 space-y-1.5 shadow-xs">
+            <h3 className="font-bold text-xs text-purple-900 flex items-center gap-2">
+              <span>📐</span> Cornell Not Sistemi
+            </h3>
+            <p className="text-[11px] leading-relaxed text-gray-600">
+              Sayfanızı üç bölüme ayırın: Notlar, Anahtar Kavramlar/Sorular ve Özet. Çalışma bittikten hemen sonra alt kısma çıkarılan 2 cümlelik özet, zihnin ana fikri kavramasını sağlar ve tekrar yaparken süreyi inanılmaz kısaltır.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white/80 border border-purple-50 space-y-1.5 shadow-xs">
+            <h3 className="font-bold text-xs text-purple-900 flex items-center gap-2">
+              <span>🗣️</span> Feynman Tekniği ile Not Alma
+            </h3>
+            <p className="text-[11px] leading-relaxed text-gray-600">
+              Öğrendiğiniz bir kavramı, konuyu hiç bilmeyen 10 yaşındaki bir çocuğa anlatıyormuş gibi en basit haliyle not edin. Karmaşık terimlerden kaçınıp kendi basit cümlelerinizi kurduğunuzda, tam olarak nerede tıkandığınızı anlarsınız.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white/80 border border-purple-50 space-y-1.5 shadow-xs">
+            <h3 className="font-bold text-xs text-purple-900 flex items-center gap-2">
+              <span>🗺️</span> Zihin Haritaları (Mind Mapping)
+            </h3>
+            <p className="text-[11px] leading-relaxed text-gray-600">
+              Lineer ve düz yazılar yerine, merkezde ana konu olacak şekilde dallanıp budaklanan şemalar çizin. Görsel hafızayı ve sağ-sol beyin loblarını aynı anda tetiklemek bağlantı kurmayı kolaylaştırır.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white/80 border border-purple-50 space-y-1.5 shadow-xs">
+            <h3 className="font-bold text-xs text-purple-900 flex items-center gap-2">
+              <span>🎨</span> Renk Kodlama & Sembol Kullanımı
+            </h3>
+            <p className="text-[11px] leading-relaxed text-gray-600">
+              Sadece 2-3 farklı renk belirleyin: Örn. Tanımlar için mavi, Sınav soruları için kırmızı, Önemli ipuçları için yeşil. Aşırı renk kullanımı dikkati dağıtırken, kurgulanmış renk kodları görsel aramayı hızlandırır.
+            </p>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-purple-50/80 border border-purple-100 text-[11px] text-purple-900 font-medium leading-relaxed">
+          💡 <strong>Altın Kural (24 Saat İçinde Gözden Geçirme):</strong> Tutulan bir not, alındığı ilk 24 saat içinde 5 dakikalık hızlı bir okumayla tekrar edilmezse bilginin %60'ı kaybolur. Notlarınızı düzenli olarak hızlı gözden geçirin!
+        </div>
+      </div>
     </div>
   );
 }

@@ -83,6 +83,7 @@ export default function LevelSelector({ onSelectLevel, onBackToLogin }: { onSele
                 'Bilgisayar Mühendisliği',
                 'Elektrik Elektronik Müh.',
                 'Endüstri Mühendisliği',
+                'Biyomedikal Mühendisliği',
                 'İnşaat Mühendisliği',
                 'Makine Mühendisliği',
                 'Yazılım Mühendisliği',

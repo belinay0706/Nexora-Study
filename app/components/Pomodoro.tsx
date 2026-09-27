@@ -116,7 +116,7 @@ export default function Pomodoro() {
           setError(
             'Pomodoro verileri Firebase üzerinden okunamadı.'
           );
-        } finally {
+        } fontally {
           setLoading(false);
         }
       }
@@ -587,6 +587,64 @@ export default function Pomodoro() {
 
         </div>
 
+      </div>
+
+      {/* 🧠 Maksimum Odaklanma ve Derin Çalışma (Deep Work) Rehberi */}
+      <div className="bg-slate-900/60 backdrop-blur-md p-8 rounded-3xl border border-slate-800 text-slate-300 space-y-6 max-w-2xl mx-auto shadow-xl">
+        <div className="border-b border-slate-800 pb-4">
+          <h2 className="text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
+            <span>🚀</span> Maksimum Odaklanma ve Derin Çalışma (Deep Work) Rehberi
+          </h2>
+          <p className="text-xs text-slate-400 mt-1 font-medium">
+            Sadece çalışmak yetmez; zihinsel yorgunluk yaşamadan en yüksek verimle 'odak akışına' girmek esastır.
+          </p>
+        </div>
+
+        <p className="text-xs leading-relaxed text-slate-400">
+          Günümüz dijital dünyasında insan beyni sürekli bildirimler ve dikkat dağıtıcılarla uyarılır. Bilişsel bilimci Cal Newport'un kavramsallaştırdığı <strong>"Deep Work" (Derin Çalışma)</strong>, sıfır dikkat dağınıklığıyla karmaşık zihinsel işlere odaklanma yeteneğidir. Pomodoro Tekniği, zihninizin bu odak akışına (Flow State) girmesini kolaylaştıran en etkili biyolojik araçtır.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1.5">
+            <h3 className="font-bold text-xs text-teal-400 flex items-center gap-2">
+              <span>⚡</span> Dikkat Kalıntısı (Attention Residue)
+            </h3>
+            <p className="text-[11px] leading-relaxed text-slate-400">
+              Çalışırken sadece 2 saniye bile telefona bakmak, beyninizde "dikkat kalıntısı" bırakır. Çalışmaya geri dönseniz dahi beyninizin bir kısmı hala o bildirimle meşguldür. Pomodoro boyunca tüm bildirimleri kapatarak dikkatinizi %100 tek bir işe verin.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1.5">
+            <h3 className="font-bold text-xs text-teal-400 flex items-center gap-2">
+              <span>🌿</span> Mola Kalitesine Dikkat Edin
+            </h3>
+            <p className="text-[11px] leading-relaxed text-slate-400">
+              5 dakikalık molalarda sosyal medyada gezinmek zihni dinlendirmez, aksine yeni uyaranlarla beyni yorar. Molalarda ayağa kalkın, esneme hareketleri yapın, su için veya pencereden dışarı bakarak göz kaslarınızı dinlendirin.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1.5">
+            <h3 className="font-bold text-xs text-teal-400 flex items-center gap-2">
+              <span>📝</span> Zihinsel Boşaltım (Brain Dump)
+            </h3>
+            <p className="text-[11px] leading-relaxed text-slate-400">
+              Pomodoro esnasında aklınıza gelen alakasız bir düşünceyi ("Arkadaşıma mesaj atmalıyım", "Aramam gereken biri var") hemen yanınızdaki kağıda yazın ve çalışmaya devam edin. Zihin o görevin kaydedildiğini bilince odağını bozmaz.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1.5">
+            <h3 className="font-bold text-xs text-teal-400 flex items-center gap-2">
+              <span>🎵</span> Biyolojik Odaklanma Sesleri
+            </h3>
+            <p className="text-[11px] leading-relaxed text-slate-400">
+              Sözlü müzikler dinlemek yerine, arka planda Lo-Fi ritimleri, beyaz gürültü (White Noise) veya Doğa sesleri kullanın. Bu frekanslar, beynin Alpha dalgalarını tetikleyerek odaklanma süresini ve derinliğini artırır.
+            </p>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-teal-950/40 border border-teal-800/60 text-[11px] text-teal-300 font-medium leading-relaxed">
+          💡 <strong>Sürelere Takılmayın:</strong> Standardı 25/5 dakikadır. Eğer konunun ortasındaysanız ve odağınız yüksekse sürenizi 45/10 veya 50/10 dakika olarak güncelleyebilirsiniz. Önemli olan süre değil, kesintisiz odaklanma kalitesidir!
+        </div>
       </div>
 
     </div>
