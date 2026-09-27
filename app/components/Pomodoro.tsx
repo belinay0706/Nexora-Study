@@ -116,7 +116,7 @@ export default function Pomodoro() {
           setError(
             'Pomodoro verileri Firebase üzerinden okunamadı.'
           );
-        } fontally {
+        } finally {
           setLoading(false);
         }
       }
