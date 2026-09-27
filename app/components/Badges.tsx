@@ -42,38 +42,53 @@ export default function Badges() {
         setLoading(true);
         const userId = user.uid;
 
-        // Kullanıcının ana dokümanını al (Pomodoro sayısı burada saklanıyor)
+        // 1. Kullanıcının ana dokümanını al (Sayaç verileri)
         const userDocRef = doc(db, 'users', userId);
         const userDocSnap = await getDoc(userDocRef);
 
+        let userPomodoro = 0;
+        let userGoals = 0;
+        let userStudy = 0;
+        let userQuestions = 0;
+        let userNotes = 0;
+
         if (userDocSnap.exists()) {
           const userData = userDocSnap.data();
-          
-          // Pomodoro sayısını doğrudan okuyoruz
-          setPomodoroCount(Number(userData.completedPomodoros) || 0);
-          
-          // Eğer diğer sayaçlar da ana dokümanda tutuluyorsa onları alıyoruz
-          setCompletedGoals(Number(userData.completedGoals) || 0);
-          setStudySessionCount(Number(userData.studySessionCount) || 0);
-          setSolvedQuestionCount(Number(userData.solvedQuestionCount) || 0);
-          setNoteCount(Number(userData.noteCount) || 0);
+          userPomodoro = Number(userData.completedPomodoros || userData.pomodoroCount) || 0;
+          userGoals = Number(userData.completedGoals) || 0;
+          userStudy = Number(userData.studySessionCount) || 0;
+          userQuestions = Number(userData.solvedQuestionCount) || 0;
+          userNotes = Number(userData.noteCount) || 0;
         }
 
-        // Alternatif olarak alt koleksiyonları da kontrol edelim (Güvenceye almak için)
+        // 2. Alt Koleksiyon Kontrolleri (Kullanıcının gerçek tamamlanmış verileriyle senkronizasyon)
         try {
           const goalsSnapshot = await getDocs(collection(db, 'users', userId, 'goals'));
           if (!goalsSnapshot.empty) {
-            const finishedGoals = goalsSnapshot.docs.filter(d => d.data().completed === true || d.data().status === 'completed').length;
-            if (finishedGoals > 0) setCompletedGoals(prev => Math.max(prev, finishedGoals));
+            const finishedGoals = goalsSnapshot.docs.filter(
+              d => d.data().completed === true || d.data().status === 'completed'
+            ).length;
+            userGoals = Math.max(userGoals, finishedGoals);
           }
-        } catch (e) { /* Sessizce geç */ }
+        } catch (e) {
+          /* Hata durumunda es geç */
+        }
 
         try {
           const notesSnapshot = await getDocs(collection(db, 'users', userId, 'notes'));
           if (!notesSnapshot.empty) {
-            setNoteCount(prev => Math.max(prev, notesSnapshot.size));
+            userNotes = Math.max(userNotes, notesSnapshot.size);
           }
-        } catch (e) { /* Sessizce geç */ }
+        } catch (e) {
+          /* Hata durumunda es geç */
+        }
+
+        // State'leri Güncelle
+        setPomodoroCount(userPomodoro);
+        setCompletedGoals(userGoals);
+        setStudySessionCount(userStudy);
+        setSolvedQuestionCount(userQuestions);
+        setNoteCount(userNotes);
 
       } catch (error) {
         console.error('Rozet verileri yüklenemedi:', error);

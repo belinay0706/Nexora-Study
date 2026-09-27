@@ -222,6 +222,9 @@ export default function Goals() {
     try {
       const profileRef = doc(db, 'users', user.uid);
 
+      // Toplam tamamlanan bireysel hedef sayısı
+      const totalIndividualCompletedGoals = updatedGoals.filter(g => g.completed).length;
+
       await setDoc(
         profileRef,
         {
@@ -231,6 +234,7 @@ export default function Goals() {
           bestStreak: updatedBestStreak,
           totalCompletedDays: updatedTotalCompletedDays,
           completedGoalsCount: updatedTotalCompletedDays,
+          completedGoals: totalIndividualCompletedGoals, // 🏅 Rozetler sayfasının okuduğu sayaç!
           badges: updatedBadges,
           updatedAt: serverTimestamp(),
         },

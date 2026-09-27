@@ -145,12 +145,12 @@ export default function Pomodoro() {
         user.uid
       );
 
-      // increment kullanıyoruz.
-      // Böylece eski değerin üzerine güvenli şekilde +1 eklenir.
+      // increment ile hem Pomodoro hem de Çalışma Oturumu sayacını güncelliyoruz
       await setDoc(
         userRef,
         {
           completedPomodoros: increment(1),
+          studySessionCount: increment(1), // Rozetler için oturum sayacı
           lastPomodoroCompletedAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         },
@@ -159,7 +159,7 @@ export default function Pomodoro() {
         }
       );
 
-      // Ekrandaki sayıyı da hemen güncelle.
+      // Ekrandaki sayıyı hemen güncelle
       setCompletedPomodoros(
         (current) => current + 1
       );
@@ -413,7 +413,7 @@ export default function Pomodoro() {
               mode === 'work'
                 ? 'bg-teal-500 text-slate-950'
                 : 'bg-slate-800 text-slate-400'
-            } disabled:opacity-50`}
+            } disabled:opacity-50 cursor-pointer`}
           >
             📚 Çalışma
           </button>
@@ -426,7 +426,7 @@ export default function Pomodoro() {
               mode === 'break'
                 ? 'bg-blue-500 text-white'
                 : 'bg-slate-800 text-slate-400'
-            } disabled:opacity-50`}
+            } disabled:opacity-50 cursor-pointer`}
           >
             ☕ Mola
           </button>
@@ -526,7 +526,7 @@ export default function Pomodoro() {
             type="button"
             disabled={saving}
             onClick={() => setIsActive((current) => !current)}
-            className={`flex-1 py-3.5 rounded-2xl font-bold text-sm transition-all ${
+            className={`flex-1 py-3.5 rounded-2xl font-bold text-sm transition-all cursor-pointer ${
               isActive
                 ? 'bg-rose-500 hover:bg-rose-600 text-white'
                 : mode === 'work'
@@ -544,7 +544,7 @@ export default function Pomodoro() {
           <button
             type="button"
             onClick={resetTimer}
-            className="px-5 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-2xl text-sm transition-all"
+            className="px-5 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-2xl text-sm transition-all cursor-pointer"
           >
             Sıfırla 🔄
           </button>

@@ -1,6 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { db, auth } from '../firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 interface SettingsProps {
   currentTheme: string;
@@ -43,10 +45,167 @@ const themes = [
   { id: 'theme-light-pink', name: 'Açık Pembe', type: 'Açık', color: 'bg-pink-100' },
 ];
 
+const departments = [
+  'YKS Hazırlık',
+  'Beslenme ve Diyetetik',
+  'Bilgisayar Mühendisliği',
+  'Biyomedikal Mühendisliği',
+  'Diş Hekimliği Fakültesi',
+  'Ebelik',
+  'Elektrik Elektronik Müh.',
+  'Endüstri Mühendisliği',
+  'Endüstriyel Tasarım',
+  'Havacılık ve Uzay Müh.',
+  'Hemşirelik Fakültesi',
+  'Hukuk Fakültesi',
+  'İngilizce Öğretmenliği',
+  'İnşaat Mühendisliği',
+  'Makine Mühendisliği',
+  'Tıp Fakültesi',
+  'Yazılım Mühendisliği'
+];
+
+const grades = [
+  'Hazırlık',
+  '1. Sınıf',
+  '2. Sınıf',
+  '3. Sınıf',
+  '4. Sınıf',
+  '5. Sınıf',
+  '6. Sınıf (İntörn)',
+  'Mezun'
+];
+
 export default function Settings({ currentTheme, setTheme }: SettingsProps) {
+  const [department, setDepartment] = useState<string>('');
+  const [grade, setGrade] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [fetching, setFetching] = useState<boolean>(true);
+  const [message, setMessage] = useState<string | null>(null);
+
+  // Kullanıcının mevcut verilerini veritabanından çekme
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (data.department) setDepartment(data.department);
+            if (data.grade) setGrade(data.grade);
+          }
+        } catch (error) {
+          console.error("Kullanıcı verileri çekilemedi:", error);
+        }
+      }
+      setFetching(false);
+    };
+
+    fetchUserData();
+  }, []);
+
+  // Profil Güncelleme
+  const handleProfileUpdate = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      setMessage('❌ Lütfen önce giriş yapın.');
+      return;
+    }
+
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        department: department,
+        grade: grade,
+      });
+
+      setMessage('✨ Bölüm ve sınıf bilgin başarıyla güncellendi!');
+    } catch (error) {
+      console.error("Güncelleme hatası:", error);
+      setMessage('❌ Güncelleme yapılırken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(null), 4000);
+    }
+  };
+
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-6">
-      {/* Üst Bilgi Kartı */}
+      
+      {/* 🎓 Bölüm & Sınıf Ayarları Kartı */}
+      <div className="bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
+        <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+          <span>🎓</span> Profil ve Öğrenim Bilgileri
+        </h1>
+        <p className="text-xs text-slate-500">
+          Yanlış bölüm veya sınıf mı seçtin? Buradan anında düzeltebilirsin.
+        </p>
+
+        {fetching ? (
+          <div className="text-xs text-slate-400 animate-pulse">Bilgiler yükleniyor...</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            
+            {/* Bölüm Seçimi */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Bölümün
+              </label>
+              <select
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className="w-full p-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:ring-2 focus:ring-teal-400 outline-none transition"
+              >
+                <option value="">Bölüm Seçin...</option>
+                {departments.map((dept) => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Sınıf Seçimi */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Sınıfın
+              </label>
+              <select
+                value={grade}
+                onChange={(e) => setGrade(e.target.value)}
+                className="w-full p-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:ring-2 focus:ring-teal-400 outline-none transition"
+              >
+                <option value="">Sınıf Seçin...</option>
+                {grades.map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+            </div>
+
+          </div>
+        )}
+
+        {/* Kaydet Butonu ve Bildirim */}
+        <div className="flex items-center justify-between pt-2">
+          <button
+            onClick={handleProfileUpdate}
+            disabled={loading || fetching}
+            className="px-5 py-2.5 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-xl transition shadow-sm hover:shadow cursor-pointer disabled:opacity-50"
+          >
+            {loading ? 'Kaydedidliyor...' : 'Bilgileri Güncelle'}
+          </button>
+
+          {message && (
+            <span className="text-xs font-medium text-slate-700 transition-all">
+              {message}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* ⚙️ Üst Tema Bilgi Kartı */}
       <div className="bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-sm">
         <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
           <span>⚙️</span> Görünüm ve Tema Ayarları

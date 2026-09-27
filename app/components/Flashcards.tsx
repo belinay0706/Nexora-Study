@@ -91,6 +91,14 @@ export default function Flashcards() {
         }),
       });
 
+      // 🛑 GELEN YANITIN JSON OLUP OLMADIĞINI KONTROL ET
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error(
+          'Sunucudan geçerli bir yanıt alınamadı (Sunucu hatası veya zaman aşımı). Lütfen tekrar deneyin.'
+        );
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -100,7 +108,7 @@ export default function Flashcards() {
       }
 
       if (!Array.isArray(data.cards)) {
-        throw new Error('AI geçerli bir kart listesi döndürmedi.');
+        throw new Error('Yapay zeka geçerli bir kart listesi döndürmedi.');
       }
 
       const formattedCards: Flashcard[] = data.cards
@@ -257,7 +265,7 @@ export default function Flashcards() {
               <button
                 onClick={() => void generateFlashcards()}
                 disabled={!inputText.trim()}
-                className="w-full py-3 bg-amber-800 hover:bg-amber-900 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl transition-all shadow-sm"
+                className="w-full py-3 bg-amber-800 hover:bg-amber-900 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer"
               >
                 ✨ Kartları Oluştur
               </button>
@@ -329,7 +337,7 @@ export default function Flashcards() {
 
             <button
               onClick={resetCards}
-              className="text-amber-800 hover:underline text-[11px]"
+              className="text-amber-800 hover:underline text-[11px] cursor-pointer"
             >
               🔄 Yeni Konu
             </button>
@@ -365,7 +373,7 @@ export default function Flashcards() {
 
             <button
               onClick={() => handleResponse('retry')}
-              className="py-3 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
+              className="py-3 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>❌</span>
               Anlamadım / Tekrar
@@ -373,7 +381,7 @@ export default function Flashcards() {
 
             <button
               onClick={() => handleResponse('learned')}
-              className="py-3 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
+              className="py-3 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>✅</span>
               Öğrendim
@@ -400,7 +408,7 @@ export default function Flashcards() {
 
           <button
             onClick={resetCards}
-            className="px-6 py-2.5 bg-amber-800 hover:bg-amber-900 text-white font-bold text-xs rounded-xl transition-all"
+            className="px-6 py-2.5 bg-amber-800 hover:bg-amber-900 text-white font-bold text-xs rounded-xl transition-all cursor-pointer"
           >
             Yeni Konu Çalış
           </button>

@@ -9,6 +9,7 @@ import {
   onSnapshot,
   setDoc,
   updateDoc,
+  increment,
 } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
@@ -179,8 +180,17 @@ export default function QuestionBook() {
     try {
       setSaving(true);
       setError('');
+      
       const questionRef = doc(db, 'users', user.uid, 'questions', id);
       await updateDoc(questionRef, { status: newStatus });
+
+      // 🏅 Çözüldü yapıldığında Rozetler için sayacı +1 artırıyoruz!
+      if (newStatus === 'resolved') {
+        const userRef = doc(db, 'users', user.uid);
+        await updateDoc(userRef, {
+          solvedQuestionCount: increment(1)
+        });
+      }
     } catch (firebaseError) {
       console.error('Soru durumu güncellenemedi:', firebaseError);
       setError('Soru durumu güncellenemedi.');
@@ -259,7 +269,7 @@ export default function QuestionBook() {
         <button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          className="px-5 py-2.5 bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-xl shadow-md transition-all transform active:scale-95 flex items-center gap-2"
+          className="px-5 py-2.5 bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-xl shadow-md transition-all transform active:scale-95 flex items-center gap-2 cursor-pointer"
         >
           <span>+ Soru Ekle</span>
         </button>
@@ -282,7 +292,7 @@ export default function QuestionBook() {
         <button
           type="button"
           onClick={() => setActiveTab('unresolved')}
-          className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+          className={`px-4 py-2 rounded-xl font-bold text-sm transition-all cursor-pointer ${
             activeTab === 'unresolved'
               ? 'bg-rose-600 text-white shadow-md'
               : 'bg-white/60 text-amber-900 hover:bg-amber-100'
@@ -294,7 +304,7 @@ export default function QuestionBook() {
         <button
           type="button"
           onClick={() => setActiveTab('resolved')}
-          className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+          className={`px-4 py-2 rounded-xl font-bold text-sm transition-all cursor-pointer ${
             activeTab === 'resolved'
               ? 'bg-emerald-600 text-white shadow-md'
               : 'bg-white/60 text-amber-900 hover:bg-amber-100'
@@ -348,7 +358,7 @@ export default function QuestionBook() {
                   type="button"
                   disabled={saving}
                   onClick={() => toggleStatus(q.id)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     q.status === 'unresolved'
                       ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
                       : 'bg-amber-100 hover:bg-amber-200 text-amber-900'
@@ -361,7 +371,7 @@ export default function QuestionBook() {
                   type="button"
                   disabled={saving}
                   onClick={() => deleteQuestion(q.id)}
-                  className="text-xs text-rose-500 hover:text-rose-700 font-semibold disabled:opacity-50"
+                  className="text-xs text-rose-500 hover:text-rose-700 font-semibold cursor-pointer disabled:opacity-50"
                 >
                   Sil
                 </button>
@@ -380,7 +390,7 @@ export default function QuestionBook() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 font-bold text-lg"
+                className="text-gray-400 hover:text-gray-600 font-bold text-lg cursor-pointer"
               >
                 ✕
               </button>
@@ -422,7 +432,7 @@ export default function QuestionBook() {
                       setQuestionType('text');
                       setQuestionContent('');
                     }}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-xl border ${
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-xl border cursor-pointer ${
                       questionType === 'text'
                         ? 'bg-amber-700 text-white border-amber-700'
                         : 'bg-gray-50 text-gray-700 border-gray-200'
@@ -437,7 +447,7 @@ export default function QuestionBook() {
                       setQuestionType('image');
                       setQuestionContent('');
                     }}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-xl border ${
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-xl border cursor-pointer ${
                       questionType === 'image'
                         ? 'bg-amber-700 text-white border-amber-700'
                         : 'bg-gray-50 text-gray-700 border-gray-200'
@@ -491,7 +501,7 @@ export default function QuestionBook() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full py-3 bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-xl shadow-md transition-all disabled:opacity-50"
+                  className="w-full py-3 bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-xl shadow-md transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {saving ? 'Kaydediliyor...' : 'Soruyu Kaydet 🎯'}
                 </button>

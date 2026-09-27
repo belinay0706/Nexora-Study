@@ -79,6 +79,7 @@ export default function QuickNotes() {
         userRef,
         {
           quickNotes: updatedNotes,
+          noteCount: updatedNotes.length, // 🏅 Rozetler sayfasının okuduğu sayaç!
           updatedAt: serverTimestamp(),
         },
         { merge: true }
@@ -178,7 +179,7 @@ export default function QuickNotes() {
     return (
       <div className="w-full bg-white/60 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-white/50 text-center">
         <div className="text-4xl mb-4">🔐</div>
-        <h2 className="text-xl font-bold text-gray-800 mb-2">
+        <h2 className="text-1xl font-bold text-gray-800 mb-2">
           Hızlı Notlar
         </h2>
         <p className="text-sm text-gray-500">
