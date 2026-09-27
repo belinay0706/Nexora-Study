@@ -58,7 +58,7 @@ export default function Flashcards() {
     } catch (error) {
       console.error('Dosya okuma hatası:', error);
       alert('Dosya okunurken bir hata oluştu.');
-    } fontally {
+    } finally {
       setIsLoading(false);
     }
   };
